@@ -17,6 +17,7 @@
  * along with Backslide.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+import Gio from 'gi://Gio'
 import St from 'gi://St';
 import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -38,10 +39,12 @@ export class Notification {
      */
     notify(title, banner_text, body){
         Main.messageTray.add(this._source.source);
-        let notification = new MessageTray.Notification(this._source, title, banner_text,
+        let notification = new MessageTray.Notification( //this._source, title, banner_text,
             {
-                body: body,
-                bodyMarkup: true
+                source: this._source,
+                title: title,
+                body: banner_text + body,
+                bodyMarkup: true,
             }
         );
         this._source.notify(notification);
@@ -60,7 +63,12 @@ export class SimpleSource {
      * @private
      */
     constructor(title, icon_name){
-        this.source = new MessageTray.Source(title, icon_name);
+        this.source = new MessageTray.Source({
+            title: title,
+            icon: new Gio.ThemedIcon({name: icon_name}),
+            iconName: icon_name,
+            policy: MessageTray.NotificationPolicy.newForApp(),
+        });
         this._icon_name = icon_name;
     }
 
