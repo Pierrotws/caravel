@@ -1,26 +1,19 @@
-## Attention
-
-This is a fork of original [BackSlide](https://gitlab.com/p91paul/BackSlide) extension with Gnome Shell 45 support
-
-# BackSlide
+# Caravel
 
 A simple Gnome-Shell Extension for an automatic background-image (wallpaper) slideshow.
 
-## Screenshots
+## Attention
 
-The Widget:
+This is a fork of original Lukas Knuth [BackSlide](https://gitlab.com/p91paul/BackSlide) extension
 
-![Widget Screenshot](_data/widget_screenshot.jpg)
+## 
 
-The preferences page to manage the image list.
+Caravel will use default themed backgrounds from gnome.
+Custom images can be used by providing "background-properties-path".
 
-![Preferences Screenshot](_data/list_screenshot.jpg)
-
-(Wallpapers **not** included)
+To create background-properties file, check my [simple generator here](https://github.com/Pierrotws/background-properties-generator)
 
 ## Installation
-
-The extension should be installed from the official extension repository. It can be found here: [![Install](http://media.cdn.ubuntu-de.org/wiki/attachments/56/32/Kippschalter-ON.png)](https://extensions.gnome.org/extension/543/backslide/)
 
 ### Manual installation
 
@@ -36,14 +29,12 @@ There are multiple stable branches, depending on the version of GnomeShell you'r
 
     :::bash
     # Clone the repository (you might already did this!)
-    git clone https://gitlab.com/p91paul/BackSlide.git BackSlide
-    cd BackSlide
-      # EXAMPLE: Build for an older GnomeShell version
-      git checkout gnome-3.8 # ONLY if you need to!
+    git clone https://github.com/Pierrotws/caravel.git
+    cd caravel
     # "Compile" the settings-schema:
-    glib-compile-schemas backslide\@codeisland.org/schemas/
+    glib-compile-schemas caravel\@pierrotws.io/schemas/
     # Copy the files over to the local extension directory:
-    cp -r backslide\@codeisland.org/ ~/.local/share/gnome-shell/extensions/
+    cp -r caravel\@pierrotws.io/ ~/.local/share/gnome-shell/extensions/
 
 Afterwards, you can activate the extension either by using the `gnome-tweak-tool` or at [extensions.gnome.org/local](https://extensions.gnome.org/local/)
 
@@ -53,19 +44,19 @@ All settings can be changed from the `gnome-shell-extension-prefs`-tool or from 
 
 * **Delay (in minutes) between wallpaper changes:** (*default*: `5`)
 
-`dconf write /org/gnome/shell/extensions/backslide/delay 15`
+`dconf write /org/gnome/shell/extensions/caravel/delay 15`
 
 * **Whether or not the wallpaper-list should be shuffled** (*default*: `true`)
 
-`dconf write /org/gnome/shell/extensions/backslide/random true|false`
+`dconf write /org/gnome/shell/extensions/caravel/random true|false`
 
-* **The List of wallpapers as a string-array of absolute, unix-styled path's:** (*default*: `[]`)
+* **The List of wallpapers as a string-array of absolute, unix-styled path's:** (*default*: `[/usr/share{gnome-background-properties]`)
 
-`dconf write /org/gnome/shell/extensions/backslide/image-list "['/path/to/picture.png', '/another/pic.png']"`
+`dconf write /org/gnome/shell/extensions/caravel/background-properties-path "${HOME}/.local/share/gnome-background-properties"`
 
 * **The already elapsed time (in minutes) from the last interval** (*default*: `0`)
 
-`dconf write /org/gnome/shell/extensions/backslide/elapsed-time 0`
+`dconf write /org/gnome/shell/extensions/caravel/elapsed-time 0`
 
 Settings changed, using the `dconf`-tool will **apply, after the extension is restarted**.
 

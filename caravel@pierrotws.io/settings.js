@@ -1,31 +1,34 @@
-/*
+/* 
+ * Copyright (C) 2024 Pierre Sauvage
  * Copyright (C) 2012 Lukas Knuth
  *
- * This file is part of Backslide.
+ * This file is part of Caravel.
  *
- * Backslide is free software: you can redistribute it and/or modify
+ * Caravel free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * Backslide is distributed in the hope that it will be useful,
+ * Caravel distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Backslide.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Caravel. If not, see <http://www.gnu.org/licenses/>.
 */
+
 import Gio from 'gi://Gio';
 
 export const KEY_DELAY = "delay";
 export const KEY_RANDOM = "random";
-export const KEY_IMAGE_LIST = "image-list";
+export const KEY_BACKGROUND_PROPERTIES_PATH = "background-properties-path";
 export const KEY_WALLPAPER = "picture-uri";
 export const KEY_WALLPAPER_DARK = "picture-uri-dark";
 export const KEY_ELAPSED_TIME = "elapsed-time";
 export const KEY_CHANGE_LOCKSCREEN = "change-lockscreen";
 
+export const BACKGROUND_PROPERTIES_DEFAULT = "/usr/share/gnome-background-properties";
 export const DELAY_MINUTES_MIN = 1;
 export const DELAY_MINUTES_DEFAULT = 5;
 export const DELAY_HOURS_MAX = 48;
@@ -40,7 +43,7 @@ export function valid_minutes(minutes) {
  */
 export class Settings {
 
-    static _schemaName = "org.gnome.shell.extensions.backslide";
+    static _schemaName = "org.gnome.shell.extensions.caravel";
 
     /**
      * Creates a new Settings-object to access the settings of this extension.
@@ -165,11 +168,11 @@ export class Settings {
     }
 
     /**
-     * The list path's to the wallpaper-files.
-     * @returns array list of wallpaper path's.
+     * Path to the background properties files.
+     * @returns path of background properties files.
      */
-    getImageList(){
-        return this._setting.get_strv(KEY_IMAGE_LIST);
+    getBackgroundPropertiesPath(){
+        return this._setting.get_string(KEY_BACKGROUND_PROPERTIES_PATH);
     }
 
     /**
@@ -177,16 +180,15 @@ export class Settings {
      * @param list the new list (array) of image-path's.
      * @throws TypeError if 'list' is not an array.
      */
-    setImageList(list){
+    setBackgroundPropertiesPath(propPath){
         // Validate:
-        let what = Object.prototype.toString; // See http://stackoverflow.com/questions/4775722
-        if (list === undefined || list === null || what.call(list) !== "[object Array]"){
-            throw TypeError("'list' should be an array. Got: "+list);
+        if (propPath === undefined || propPath === null || typeof propPath !== "string"){
+            throw TypeError("propPath should be a string variable. Got: "+propPath);
         }
         // Set:
-        let key = KEY_IMAGE_LIST;
+        let key = KEY_BACKGROUND_PROPERTIES_PATH;
         if (this._setting.is_writable(key)){
-            if (this._setting.set_strv(key, list)){
+            if (this._setting.set_string(key, list)){
                 Gio.Settings.sync();
             } else {
                 throw this._errorSet(key);
@@ -227,16 +229,7 @@ export class Settings {
         } else {
             throw this._errorWritable(key);
         }
-        if (this.getChangeLockscreen()){
-            if (this._screensaver_setting.is_writable(key)){
-                // Set a new Screensaver-Image:
-                if (!this._screensaver_setting.set_string(key, "file://"+path) ){
-                    throw this._errorSet(key);
-                }
-            } else {
-                throw this._errorWritable(key);
-            }
-        }
+        
         // Set for the dark mode (GNOME 42):
         key = KEY_WALLPAPER_DARK;
         if (this._background_setting.is_writable(key)){
@@ -248,16 +241,7 @@ export class Settings {
             throw this._errorWritable(key);
         }
         key = KEY_WALLPAPER;
-        if (this.getChangeLockscreen()){
-            if (this._screensaver_setting.is_writable(key)){
-                // Set a new Screensaver-Image:
-                if (!this._screensaver_setting.set_string(key, "file://"+path) ){
-                    throw this._errorSet(key);
-                }
-            } else {
-                throw this._errorWritable(key);
-            }
-        }
+        
         Gio.Settings.sync(); // Necessary: http://stackoverflow.com/questions/9985140
     }
 
@@ -291,9 +275,6 @@ export class Settings {
         }
     }
 
-    getChangeLockscreen(){
-        return this._setting.get_boolean(KEY_CHANGE_LOCKSCREEN);
-    }
     _errorWritable(key){
         return "The key '"+key+"' is not writable.";
     }

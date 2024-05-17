@@ -2,10 +2,10 @@
     "shell-version": [
         "45", "46"
     ],
-    "uuid": "backslide@codeisland.org",
-    "name": "BackSlide",
+    "uuid": "caravel@pierrotws.io",
+    "name": "Caravel",
     "description": "Automatic background-image (wallpaper) slideshow for Gnome Shell",
     "original-author": "Lukas Knuth",
-    "url": "https://github.com/Pierrotws/BackSlide",
-    "gettext-domain": "backslide"
+    "url": "https://github.com/Pierrotws/Caravel",
+    "gettext-domain": "caravel"
 }

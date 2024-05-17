@@ -1,6 +1,7 @@
-## BackSlide - Development
+## Caravel - Development
 
-All the development will take place on the `dev`-branch (except for [older versions](#extension-versions)). **Don't** install the extension from this branch **unless**:
+All the development will take place on the `dev`-branch.
+**Don't** install the extension from this branch **unless**:
 
  1. you're a developer
  2. you where told so

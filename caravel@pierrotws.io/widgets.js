@@ -1,25 +1,22 @@
-/*
+/* 
+ * Copyright (C) 2024 Pierre Sauvage
  * Copyright (C) 2012 Lukas Knuth
  *
- * This file is part of Backslide.
+ * This file is part of Caravel.
  *
- * Backslide is free software: you can redistribute it and/or modify
+ * Caravel free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * Backslide is distributed in the hope that it will be useful,
+ * Caravel distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Backslide.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Caravel. If not, see <http://www.gnu.org/licenses/>.
 */
-/**
-  * This is where all the widgets for the menu life.
-*/
-const EXTENSION_UUID = 'backslide@codeisland.org';
 
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Slider from 'resource:///org/gnome/shell/ui/slider.js';
@@ -64,7 +61,7 @@ export class OpenPrefsWidget extends GObject.Object {
     }
 
     _onClick(){
-        this.launchExtensionPrefs("backslide@codeisland.org");
+        this.launchExtensionPrefs("caravel@pierrotws.io");
         this._menu.toggle(); // Toggle the menu.
     }
 

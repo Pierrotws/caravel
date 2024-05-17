@@ -1,5 +1,5 @@
 #!/bin/bash
-rm -rf backslide@codeisland.org.zip
-cd backslide@codeisland.org/
+rm -rf caravel@pierrotws.io.zip
+cd caravel@pierrotws.io/
 glib-compile-schemas schemas/
-zip -r ../backslide@codeisland.org.zip * -x 'po/*'
+zip -r ../caravel@pierrotws.io.zip * -x 'po/*'

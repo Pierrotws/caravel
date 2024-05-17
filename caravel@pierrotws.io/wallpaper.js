@@ -1,21 +1,23 @@
-/*
+/* 
+ * Copyright (C) 2024 Pierre Sauvage
  * Copyright (C) 2012 Lukas Knuth
  *
- * This file is part of Backslide.
+ * This file is part of Caravel.
  *
- * Backslide is free software: you can redistribute it and/or modify
+ * Caravel free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * Backslide is distributed in the hope that it will be useful,
+ * Caravel distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Backslide.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Caravel. If not, see <http://www.gnu.org/licenses/>.
 */
+
 import GLib from 'gi://GLib';
 import * as Pref from './settings.js';
 import * as Notify from './notification.js';
@@ -79,7 +81,7 @@ export class Wallpaper {
      * @private
      */
     _loadQueue(){
-        let list = this._settings.getImageList();
+        let list = this._settings.getBackgroundPropertiesPath();
         // Add current if empty:
         if (list.length === 0){
             list.push( this._settings.getWallpaper() );
@@ -199,7 +201,7 @@ export class Wallpaper {
      * @param path [optional] the path to the one invalid wallpaper.
      */
     removeInvalidWallpapers(path){
-        let list = this._settings.getImageList();
+        let list = this._settings.getBackgroundPropertiesPath();
         let found = [];
         if (path === undefined || path === null || typeof path !== "string"){
             // No wallpaper specified, remove all invalid ones:
@@ -222,14 +224,14 @@ export class Wallpaper {
         }
         // Check if we have changes:
         if (found.length !== 0){
-            this._settings.setImageList(list);
+            this._settings.setBackgroundPropertiesPath(list);
             // Show Notification.
             let body = "";
             for (let i in found){
                 body += "* "+found[i]+"\n";
             }
             this._notify.notify(
-                "BackSlide Wallpaper Error",
+                "Caravel Wallpaper Error",
                 _("The following images where invalid (not found or not image-types) and have been removed:"),
                 body
             );

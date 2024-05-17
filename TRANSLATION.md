@@ -24,7 +24,7 @@ Here is a workflow-example from within the cloned git-repository. For this examp
 git checkout -b transEN dev #REPLACE en WITH YOUR LANGUAGE!
 
 # Navigate to the translation folder
-cd backslide\@codeisland.org/po/
+cd caravel\@pierrotws.io/po/
 # This will create a new .po file in your systems language.
 msginit
 # Now edit the created file to add your translations.
@@ -37,7 +37,7 @@ mkdir -p locale/en/LC_MESSAGES #REPLACE en WITH YOUR LANGUAGE!
 msgfmt po/en.po -o locale/en/LC_MESSAGES/backslide.mo
 # Now, test everything:
 cd ..
-cp -rf backslide\@codeisland.org/ ~/.local/share/gnome-shell/extensions/
+cp -rf caravel\@pierrotws.io/ ~/.local/share/gnome-shell/extensions/
 ```
 
 For more information on this topic, consult the [official translation document](https://live.gnome.org/GnomeShell/Extensions/FAQ/CreatingExtensions).
@@ -48,7 +48,7 @@ If a translation is outdated (some new strings aren't translated yet), an update
 
 ```bash
 # Navigate to the translation folder
-cd backslide\@codeisland.org/po/
+cd caravel\@pierrotws.io/po/
 # Use the convenient script to updated the .po file
 #   REPLACE en WITH YOUR LANGUAGE!
 ./update_translation.sh en.po
@@ -69,7 +69,7 @@ However, if for some reason you added new strings to any `.js`-file, which need 
 
 ```bash
 # Navigate to the translation folder
-cd backslide\@codeisland.org/po/
+cd caravel\@pierrotws.io/po/
 # Use the convenient script to updated the default.pot file
 ./update_template.sh
 ```
