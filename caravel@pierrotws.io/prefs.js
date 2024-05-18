@@ -34,7 +34,7 @@ import GdkPixbuf from 'gi://GdkPixbuf';
 
 
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
-import * as Pref from './settings.js';
+import * as Settings from './settings.js';
 import { EXTENSION_UUID } from './utils.js';
 
 export default class CaravelExtensionPreferences extends ExtensionPreferences {
@@ -42,7 +42,7 @@ export default class CaravelExtensionPreferences extends ExtensionPreferences {
         console.log("Caravel Preferences class init");
 
         extension.initTranslations();
-        settings = new Pref.Settings(extension)
+        settings = new Settings.Settings(extension)
         this._initialized = true;
     }
 
@@ -79,7 +79,7 @@ function init(){
     console.log("Caravel Preferences static init");
     let extension = Me();
     extension.initTranslations();
-    settings = new Pref.Settings(extension)
+    settings = new Settings.Settings(extension);
 }
 
 function addFileEntry(model, path){

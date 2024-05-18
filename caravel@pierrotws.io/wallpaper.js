@@ -18,11 +18,11 @@
  * along with Caravel. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import GLib from 'gi://GLib';
-import * as Pref from './settings.js';
+import * as Settings from './settings.js';
 import * as Notify from './notification.js';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
-import {Me} from './utils.js';
+import {Me, listXmlFiles} from './utils.js';
+import { createFromXML } from './background.js';
 
 /**
  * This is where the list of wallpapers is maintained and the current
@@ -31,28 +31,25 @@ import {Me} from './utils.js';
  * All Wallpaper-functionality is bundled in this class.
  */
 export class Wallpaper {
-
     /**
      * Constructs a new class to do all the wallpaper-related work.
      * @private
      */
     constructor(){
-        this._settings = new Pref.Settings(Me());
+        this._settings = new Settings.Settings(Me());
         this._notify = new Notify.Notification();
-        this._image_queue = [];
+        this._queue = [];
         this._is_random = false;
         this._preview_callback = null;
         // Catch changes happening in the config-tool and update the list
-        this._settings.bindKey(Pref.KEY_IMAGE_LIST, () => {
-            this._image_queue.length = 0; // Clear the array, see http://stackoverflow.com/a/1234337/717341
+        this._settings.bindKey(Settings.KEY_BACKGROUND_DIR, () => {
+            this._queue.length = 0; // Clear the array, see http://stackoverflow.com/a/1234337/717341
             this._loadQueue();
-            this._removeDuplicate();
             this._triggerPreviewCallback();
         });
         this._is_random = this._settings.isRandom();
         // Load images:
         this._loadQueue();
-        this._removeDuplicate();
     }
 
     /**
@@ -81,43 +78,27 @@ export class Wallpaper {
      * @private
      */
     _loadQueue(){
-        let list = this._settings.getBackgroundPropertiesPath();
-        // Add current if empty:
-        if (list.length === 0){
-            list.push( this._settings.getWallpaper() );
+        this._indx = 0
+        let bg_path = this._settings.getBackgroundDir();
+        let xml_list = listXmlFiles(bg_path);
+        for (let i=0; i<xml_list.length; i++) {
+            let bg = createFromXML(xml_list[i]);
+            this._queue.push(bg);
         }
         // Check if shuffle:
         if (this._is_random === true){
-            this._fisherYates(list);
-            // Check if last element in queue is same as first in list:
-            if (this._image_queue.length > 1 && this._image_queue[this._image_queue.length-1] === list[0]){
-                // Move duplicate to the end of the new list:
-                let duplicate = list.shift();
-                list.push(duplicate);
-            }
-        }
-        // Append to queue:
-        for (let i in list){
-            this._image_queue.push(list[i]);
+            this._fisherYatesQueue();
         }
     }
 
     /**
-     * If the first item from the current image-queue matches the wallpaper which is
-     *  currently set, the item will be removed from the list.
+     * Return next Wallpaper index
      * @private
      */
-    _removeDuplicate(){
-        // Check if it's only one image in the list:
-        if (this._image_queue.length <= 1){
-            return;
-        }
-        // Otherwise, remove is necessary:
-        if (this._settings.getWallpaper() === this._image_queue[0]){
-            this._image_queue.shift();
-        }
+    _getNextIndex() {
+        return (this._indx + 1) % this._queue.length;
     }
-
+    
     /**
      * Checks whether a preview-callback exists and calls it with the next wallpaper.
      * @see #setPreviewCallback
@@ -125,19 +106,17 @@ export class Wallpaper {
      */
     _triggerPreviewCallback(){
         if (this._preview_callback !== null){
-            let next_wallpaper = this._image_queue[0];
-            this._preview_callback(next_wallpaper);
+            this._preview_callback(this._queue[this._getNextIndex()]);
         }
     }
 
     /**
      * Sorts the image-list for iterative access.
      */
-    order(){
+    order() {
         this._is_random = false;
-        this._image_queue.length = 0; // Clear the array, see http://stackoverflow.com/a/1234337/717341
+        this._queue.length = 0; // Clear the array, see http://stackoverflow.com/a/1234337/717341
         this._loadQueue();
-        this._removeDuplicate();
         // Callback:
         this._triggerPreviewCallback();
     }
@@ -145,97 +124,39 @@ export class Wallpaper {
     /**
      * Shuffle the image-list for random access.
      */
-    shuffle(){
+    shuffle() {
         this._is_random = true;
         // Shuffle the current queue
-        this._fisherYates(this._image_queue);
+        this._fisherYatesQueue();
         // Callback:
         this._triggerPreviewCallback();
     }
 
     /**
-     * Implementation of the "Fisher-Yates shuffle"-algorithm, taken from
-     *  http://stackoverflow.com/q/2450954/717341
-     * @param array the array to shuffle.
-     * @return {Boolean} false if the arrays length is 0.
+     * Implementation of the "Fisher-Yates shuffle"-algorithm
+     * that shuffles _image_queue
      * @private
      */
-    _fisherYates(array) {
-        var i = array.length, j, tempi, tempj;
-        if ( i == 0 ) return false;
-        while ( --i ) {
-            j       = Math.floor( Math.random() * ( i + 1 ) );
-            tempi   = array[i];
-            tempj   = array[j];
-            array[i] = tempj;
-            array[j] = tempi;
+    _fisherYatesQueue() {
+        let i = this._queue.length;
+        if (i > 0) {    
+            while (--i) {
+                let j = Math.floor(Math.random() * (i + 1));
+                let tempj = this._queue[j];
+                this._queue[j] = this._queue[i];
+                this._queue[i] = tempj;
+            }
         }
-        return true;
     }
 
     /**
      * Slide to the next wallpaper in the list.
      */
-    next(){
-        // Check if there where any items left in the stack:
-        if (this._image_queue.length <= 2){
-            this._loadQueue(); // Load new wallpapers
-        }
-        let wallpaper = this._image_queue.shift();
-        // Set the wallpaper:
-        if (GLib.file_test(wallpaper, GLib.FileTest.EXISTS)){
-            // The file exists, we're good to go.
-            this._settings.setWallpaper(wallpaper);
-            // Callback:
+    next() {
+        if(this._queue.length > 1) {
+            this._indx = this._getNextIndex();
+            this._settings.setWallpaper(this._queue[this._indx]);
             this._triggerPreviewCallback();
-        } else {
-            // File is not found. Check the *whole* list for any non-existing files and remove them.
-            this.removeInvalidWallpapers(); // This will trigger a reload of the whole list.
         }
     }
-
-    /**
-     * This function will remove any invalid wallpaper(s) (image not found).
-     * If no 'path' is specified, the whole list is searched for invalid wallpapers
-     *  which will be removed.
-     * @param path [optional] the path to the one invalid wallpaper.
-     */
-    removeInvalidWallpapers(path){
-        let list = this._settings.getBackgroundPropertiesPath();
-        let found = [];
-        if (path === undefined || path === null || typeof path !== "string"){
-            // No wallpaper specified, remove all invalid ones:
-            for (let i in list){
-                if (GLib.file_test(list[i], GLib.FileTest.EXISTS) === false){
-                    // File does not exist, remove:
-                    found.push(list[i]);
-                    list.splice(i, 1);
-                }
-            }
-        } else {
-            // We have a specific wallpaper, remove it:
-            for (var i in list){
-                if (list[i] === path){
-                    // remove the item
-                    found.push(list[i]);
-                    list.splice(i, 1);
-                }
-            }
-        }
-        // Check if we have changes:
-        if (found.length !== 0){
-            this._settings.setBackgroundPropertiesPath(list);
-            // Show Notification.
-            let body = "";
-            for (let i in found){
-                body += "* "+found[i]+"\n";
-            }
-            this._notify.notify(
-                "Caravel Wallpaper Error",
-                _("The following images where invalid (not found or not image-types) and have been removed:"),
-                body
-            );
-        }
-    }
-
 }

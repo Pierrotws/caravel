@@ -1,4 +1,4 @@
-## BackSlide - Translation
+## Caravel - Translation
 
 ### What Tools do I need?
 
@@ -11,11 +11,11 @@ We use [gettext](http://www.gnu.org/software/gettext/) for all translations. You
 
 These ship in different packages, depending on your distribution. Contact your distributions package manager or package-list online.
 
-You'll also need the source-code of BackSlide. *Clone* **or** *Fork* the git repository (see README file, "Manual Installation"-section). If you are **not familiar with git**, you can also download the necessary files, create a translation and send in just the new file.
+You'll also need the source-code of Caravel. *Clone* **or** *Fork* the git repository (see README file, "Manual Installation"-section). If you are **not familiar with git**, you can also download the necessary files, create a translation and send in just the new file.
 
 **See** ["How do I send in my translation?"](#how-do-i-send-in-my-translation)!
 
-### How can I translate BackSlide?
+### How can I translate Caravel ?
 
 Here is a workflow-example from within the cloned git-repository. For this example we'll assume, that your system language is `en`. The language-identifier for your system is the filename of the created `.po`-file, without the file-ending.
 
@@ -34,7 +34,7 @@ cd ..
 mkdir -p locale/en/LC_MESSAGES #REPLACE en WITH YOUR LANGUAGE!
 # "Compile" the language-file
 #   REPLACE en WITH YOUR LANGUAGE!
-msgfmt po/en.po -o locale/en/LC_MESSAGES/backslide.mo
+msgfmt po/en.po -o locale/en/LC_MESSAGES/caravel.mo
 # Now, test everything:
 cd ..
 cp -rf caravel\@pierrotws.io/ ~/.local/share/gnome-shell/extensions/
@@ -78,7 +78,7 @@ cd caravel\@pierrotws.io/po/
 
 ### How can I *correct* a translation?
 
-If you feel that something has not been translated very well or simply plain wrong, please [create a new issue](https://gitlab.com/p91paul/BackSlide/-/issues/new).
+If you feel that something has not been translated very well or simply plain wrong, please [create a new issue](https://github.com/Pierrotws/Caravel/-/issues/new).
 
 If you can, you can also include an updated translation string, a patch or even send in a pull-request (see above for details on these topics).
 
@@ -86,7 +86,7 @@ If you can, you can also include an updated translation string, a patch or even 
 
 **After** you finished with everything mentioned in [Why was my translation rejected?](#why-was-my-translation-rejected), it depends on what you prefer:
 
-* [Create a new issue](https://gitlab.com/p91paul/BackSlide/-/issues/new) titled "Translation for [language]"
+* [Create a new issue](https://github.com/Pierrotws/Caravel/-/issues/new) titled "Translation for [language]"
 * Depending on how you got the source, do **one** of the following:
   * If you cloned the repository, [create a patch](http://git-scm.com/book/ch5-2.html#Public-Large-Project) and attach it to the issue
   * If you forked the repository, send a pull request from your `transXX`-branch

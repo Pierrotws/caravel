@@ -19,19 +19,25 @@
 */
 
 import Gio from 'gi://Gio';
+import { BackgroundXml } from './background.js';
 
 export const KEY_DELAY = "delay";
 export const KEY_RANDOM = "random";
-export const KEY_BACKGROUND_PROPERTIES_PATH = "background-properties-path";
+export const KEY_BACKGROUND_DIR = "background-properties-path";
 export const KEY_WALLPAPER = "picture-uri";
 export const KEY_WALLPAPER_DARK = "picture-uri-dark";
+export const KEY_OPTIONS = "picture-options"
+export const KEY_SHADE_TYPE = "color-shading-type"
+export const KEY_PCOLOR = "primary-color"
+export const KEY_SCOLOR = "secondary-color"
+
 export const KEY_ELAPSED_TIME = "elapsed-time";
 export const KEY_CHANGE_LOCKSCREEN = "change-lockscreen";
 
 export const BACKGROUND_PROPERTIES_DEFAULT = "/usr/share/gnome-background-properties";
 export const DELAY_MINUTES_MIN = 1;
 export const DELAY_MINUTES_DEFAULT = 5;
-export const DELAY_HOURS_MAX = 48;
+export const DELAY_HOURS_MAX = 24;
 export const DELAY_MINUTES_MAX = DELAY_HOURS_MAX * 60;
 
 export function valid_minutes(minutes) {
@@ -85,7 +91,7 @@ export class Settings {
      * @param key the key to watch for changes.
      * @param callback the callback-function to call.
      */
-    bindKey(key, callback){
+    bindKey(key, callback) {
         // Validate:
         if (key === undefined || key === null || typeof key !== "string"){
             throw TypeError("The 'key' should be a string. Got: '"+key+"'");
@@ -99,11 +105,19 @@ export class Settings {
         });
     }
 
+    isDarkMode() {
+        return (this._setting.get_string(DARK_KEY) !== "prefer-dark")
+    }
+
+    getKeyWallpaper() {
+        return this.isDarkMode() ? KEY_WALLPAPER_DARK : KEY_WALLPAPER;
+    }
+
     /**
      * Get the delay (in minutes) between the wallpaper-changes.
      * @returns int the delay in minutes.
      */
-    getDelay(){
+    getDelay() {
         var minutes = this._setting.get_int(KEY_DELAY);
         if (!valid_minutes(minutes)) {
                 this.setDelay(DELAY_MINUTES_DEFAULT);
@@ -113,11 +127,18 @@ export class Settings {
     }
 
     /**
+     * Whether to set or not to set lockscreen
+     * @returns b true if lockscreen must be set also
+     */
+    getChangeLockScreen() {
+        return this._setting.get_boolean(KEY_CHANGE_LOCKSCREEN);
+    }
+    /**
      * Set the new delay in minutes.
      * @param delay the new delay (in minutes).
      * @throws TypeError if the given delay is not a number or less than 1
      */
-    setDelay(delay){
+    setDelay(delay) {
         // Validate:
         if (delay === undefined || delay === null || typeof delay !== "number" || !valid_minutes(delay)){
             throw TypeError("delay should be a number, in range [" + DELAY_MINUTES_MIN + ", " + DELAY_MINUTES_MAX + "]. Got: "+delay);
@@ -149,7 +170,7 @@ export class Settings {
      * @param isRandom true if random, false otherwise.
      * @throws TypeError if "isRandom" is not a boolean value.
      */
-    setRandom(isRandom){
+    setRandom(isRandom) {
         // validate:
         if (isRandom === undefined || isRandom === null || typeof isRandom !== "boolean"){
             throw TypeError("isRandom should be a boolean variable. Got: "+isRandom);
@@ -171,8 +192,8 @@ export class Settings {
      * Path to the background properties files.
      * @returns path of background properties files.
      */
-    getBackgroundPropertiesPath(){
-        return this._setting.get_string(KEY_BACKGROUND_PROPERTIES_PATH);
+    getBackgroundDir() {
+        return this._setting.get_string(KEY_BACKGROUND_DIR);
     }
 
     /**
@@ -180,76 +201,67 @@ export class Settings {
      * @param list the new list (array) of image-path's.
      * @throws TypeError if 'list' is not an array.
      */
-    setBackgroundPropertiesPath(propPath){
+    setBackgroundDir(propPath) {
         // Validate:
         if (propPath === undefined || propPath === null || typeof propPath !== "string"){
             throw TypeError("propPath should be a string variable. Got: "+propPath);
         }
         // Set:
-        let key = KEY_BACKGROUND_PROPERTIES_PATH;
-        if (this._setting.is_writable(key)){
-            if (this._setting.set_string(key, list)){
-                Gio.Settings.sync();
-            } else {
-                throw this._errorSet(key);
-            }
-        } else {
-            throw this._errorWritable(key);
-        }
-    }
-
-    /**
-     * Get the Unix-styled, absolute path to the currently set wallpaper-file.
-     * @return string the Unix-styled, absolute path to the wallpaper-file.
-     */
-    getWallpaper(){
-        let full = this._background_setting.get_string(KEY_WALLPAPER);
-        return full.substring("file://".length); // Cut out the "file://"-stuff
+        let key = KEY_BACKGROUND_DIR;
+        this._writeKey(this._setting, key, propPath);
+        Gio.Settings.sync();
     }
 
     /**
      * Set the new Wallpaper.
-     * @param path an absolute, Unix style path to the image-file for the new Wallpaper.
-     *  For example: "/home/user/image.jpg"
+     * @param bg a backgroundXml Object.
      * @throws string if there was a problem setting the new wallpaper.
      * @throws TypeError if the given path was invalid
      */
-    setWallpaper(path){
+    setWallpaper(bg) {
         // Validate
-        if (path === undefined || path === null || typeof path !== "string"){
-            throw TypeError("path should be a valid, absolute, linux styled path. Got: '"+path+"'");
+        if (bg === undefined || bg === null ||  !(bg instanceof BackgroundXml)) {
+            throw TypeError("param should be a BackgroundXml Got: '"+bg+"'");
         }
-        // Set:
-        let key = KEY_WALLPAPER;
-        if (this._background_setting.is_writable(key)){
-            // Set a new Background-Image (should show up immediately):
-            if (!this._background_setting.set_string(key, "file://"+path) ){
-                throw this._errorSet(key);
-            }
-        } else {
-            throw this._errorWritable(key);
+        this._writeKey(this._background_setting, KEY_WALLPAPER, "file://"+bg.filename_light);
+        this._writeKey(this._background_setting, KEY_WALLPAPER_DARK, "file://"+bg.filename_dark);
+        this._writeKey(this._background_setting, KEY_OPTIONS, bg.options);
+        this._writeKey(this._background_setting, KEY_SHADE_TYPE, bg.shade_type);
+        this._writeKey(this._background_setting, KEY_PCOLOR, bg.pcolor);
+        this._writeKey(this._background_setting, KEY_SCOLOR, bg.scolor);
+
+        if(this.getChangeLockScreen()) {
+            this._writeKey(this._screensaver_setting, KEY_WALLPAPER, "file://"+bg.filename_light);
+            this._writeKey(this._screensaver_setting, KEY_OPTIONS, bg.options);
+            this._writeKey(this._screensaver_setting, KEY_SHADE_TYPE, bg.shade_type);
+            this._writeKey(this._screensaver_setting, KEY_PCOLOR, bg.pcolor);
+            this._writeKey(this._screensaver_setting, KEY_SCOLOR, bg.scolor);
         }
-        
-        // Set for the dark mode (GNOME 42):
-        key = KEY_WALLPAPER_DARK;
-        if (this._background_setting.is_writable(key)){
-            // Set a new Background-Image (should show up immediately):
-            if (!this._background_setting.set_string(key, "file://"+path) ){
-                throw this._errorSet(key);
-            }
-        } else {
-            throw this._errorWritable(key);
-        }
-        key = KEY_WALLPAPER;
-        
         Gio.Settings.sync(); // Necessary: http://stackoverflow.com/questions/9985140
+    }
+    
+    /**
+     * Write dconf string property in various dconf paths
+     * @param setting the dconf destination path.
+     * @param key the dconf key
+     * @param value the string value to write
+     * @throws Custom erros
+     */
+    _writeKey(setting, key, value) {
+        if (setting.is_writable(key)) {
+            if (!setting.set_string(key, value)) {
+                throw this._errorSet(key);
+            }
+        } else {
+            throw this._errorWritable(key);
+        }
     }
 
     /**
      * Get the time (in minutes), which has already elapsed from the last set timeout-interval.
      * @return int the elapsed time in minutes.
      */
-    getElapsedTime(){
+    getElapsedTime() {
         return this._setting.get_int(KEY_ELAPSED_TIME);
     }
 
@@ -258,7 +270,7 @@ export class Settings {
      * @param time the time (in minutes) that has elapsed.
      * @throws TypeError if 'time' wasn't a number or less than 0.
      */
-    setElapsedTime(time){
+    setElapsedTime(time) {
         // Validate:
         if (time === undefined || time === null || typeof time != "number" || time < 0){
             throw TypeError("'time' needs to be a number, greater than 0. Given: "+time);
@@ -275,10 +287,10 @@ export class Settings {
         }
     }
 
-    _errorWritable(key){
+    _errorWritable(key) {
         return "The key '"+key+"' is not writable.";
     }
-    _errorSet(key){
+    _errorSet(key) {
         return "Couldn't set the key '"+key+"'";
     }
 }

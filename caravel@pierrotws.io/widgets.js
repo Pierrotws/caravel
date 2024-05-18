@@ -22,7 +22,7 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Slider from 'resource:///org/gnome/shell/ui/slider.js';
 import * as Util from 'resource:///org/gnome/shell/misc/util.js';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
-import {Me} from './utils.js';
+import {Me, mergeImage} from './utils.js';
 
 import St from 'gi://St';
 import GObject from 'gi://GObject';
@@ -30,7 +30,7 @@ import Cogl from 'gi://Cogl';
 import GdkPixbuf from 'gi://GdkPixbuf';
 import Clutter from 'gi://Clutter';
 
-import * as Pref from './settings.js';
+import * as Settings from './settings.js';
 
 /**
  * A Button to open the "gnome-shell-extension-prefs"-tool to configure this extension.
@@ -84,7 +84,7 @@ export class NextWallpaperWidget extends GObject.Object {
         GObject.registerClass(this);
     }
 
-    _init(){
+    _init() {
         this._icon = new Clutter.Actor()
         this._img = new Clutter.Image();
         this.item = new PopupMenu.PopupBaseMenuItem({reactive: false});
@@ -94,7 +94,7 @@ export class NextWallpaperWidget extends GObject.Object {
             style_class: 'middle-aligned',
         });
 
-        //this.item.add_child(this._box)
+        this.item.add_child(this._box)
         
         // The computer-picture:
         let screen_image = Me().dir.get_child('img').get_child("screen.png");
@@ -113,9 +113,8 @@ export class NextWallpaperWidget extends GObject.Object {
         this._icon_bin = new St.Bin({
             child: this._icon, // The icon has much space on top/bottom,
         });
-        //this._box.add(this._icon_bin);
-        this.item.add_child(this._icon_bin);
-
+        this._box.add_child(this._icon_bin);
+        
         this._texture = new Clutter.Actor({
             content: this._img
         });
@@ -124,34 +123,34 @@ export class NextWallpaperWidget extends GObject.Object {
             style_class: "overlay"
         });
         this._wallpaper.set_child(this._texture);
-        //this._box.add(this._wallpaper);
-
-
+        this._box.add_child(this._wallpaper);
     }
 
 
     /**
      * Load the next image to be set as the wallpaper into the widget.
-     * @param path the path to the image to preview.
+     * @param backgroundXml the backgrounXml object of image to preview.
      */
-    setNextWallpaper(path){
-        let pixbuf = GdkPixbuf.Pixbuf.new_from_file(path);
+    setWallpaper(backgroundXml) {
+        //todo: get darkMode from settings
+        let path = backgroundXml.filename_light;
+        let left = GdkPixbuf.Pixbuf.new_from_file(backgroundXml.filename_light);
+        let right = GdkPixbuf.Pixbuf.new_from_file(backgroundXml.filename_dark);
+        let merged = mergeImage(left, right);
         let new_img = new Clutter.Image();
-        let isSet = new_img.set_data(pixbuf.get_pixels(),
-            pixbuf.get_has_alpha() ? Cogl.PixelFormat.RGBA_8888
+        let isSet = new_img.set_data(merged.get_pixels(),
+            merged.get_has_alpha() ? Cogl.PixelFormat.RGBA_8888
                             : Cogl.PixelFormat.RGB_888,
-            pixbuf.get_width(),
-            pixbuf.get_height(),
-            pixbuf.get_rowstride());
+            merged.get_width(),
+            merged.get_height(),
+            merged.get_rowstride());
 
-        if (isSet === false){
-            throw "Image at '"+path+"' couldn't be found. It will be removed from the list...";
-        }else{
+        if (isSet === false) {
+            throw "Image at '"+path+"' couldn't be found.";
+        } else {
             this._texture.set_content(new_img);
             this._wallpaper.set_child(this._texture);
             this._icon.set_content(new_img);
-
-
         }
     }
 
@@ -191,16 +190,16 @@ export class WallpaperControlWidget extends GObject.Object {
      * Creates a new control-widget.
      * @private
      */
-    _init(nextWallpaper, timerStateChanged, orderStateChanged){
+    _init(wallpaperChanged, timerStateChanged, orderStateChanged){
         this.item = new PopupMenu.PopupBaseMenuItem({reactive: false});
         // Add the layout:
-        this.box = new St.BoxLayout({
+        this._box = new St.BoxLayout({
             style_class: 'controls',
             x_expand: true,
             y_expand: true
         });
 
-        this.item.child = this.box;
+        this.item.add_child(this._box);
 
         // Add the buttons:
         this._order_button = new ControlToggleButton(
@@ -221,20 +220,17 @@ export class WallpaperControlWidget extends GObject.Object {
             }
         );
         timer_button.setState(STOP_TIMER_STATE);
-        //this.box.add_actor(timer_button.actor);
+        this._box.add_child(timer_button.actor);
         let skipButton = new ControlButton("media-skip-forward");
-        let self = this;
-        skipButton.actor.connect('clicked', function() {
-          nextWallpaper();
-        });
-        //this.box.add_actor(skipButton.actor);
+        skipButton.actor.connect('clicked', wallpaperChanged);
+        this._box.add_child(skipButton.actor);
     }
 
     /**
      * Set the state of the order-button.
      * @param isRandom whether the wallpaper-order is random or not.
      */
-    setOrderState(isRandom){
+    setOrderState(isRandom) {
         this._order_button.setState(isRandom);
     }
 
@@ -243,7 +239,7 @@ export class WallpaperControlWidget extends GObject.Object {
      * @param state the state of the wallpaper-order.
      * @private
      */
-    _orderStateChanged(state){
+    _orderStateChanged(state) {
         this.emit("order-state-changed", state);
     }
 
@@ -251,8 +247,8 @@ export class WallpaperControlWidget extends GObject.Object {
      * Emits the "next-wallpaper"-signal, to be caught upstream.
      * @private
      */
-    _nextWallpaper(){
-        global.log("_nextWallpaper this ");
+    _nextWallpaper() {
+        console.log("_nextWallpaper this ");
         this.emit("next-wallpaper"); // Custom signal
     }
 
@@ -261,7 +257,7 @@ export class WallpaperControlWidget extends GObject.Object {
      * @param state the state of the widget. See STOP_WIDGET_TIMER_STATE and START_WIDGET_TIMER_STATE
      * @private
      */
-    _timerStateChanged(state){
+    _timerStateChanged(state) {
         this.emit("timer-state-changed", );
     }
 
@@ -530,8 +526,8 @@ export class DelaySlider extends SliderItem {
     _init(minutes){
         super._init(0); // value MUST be specified!
         this._MINUTES_MAX = 59;
-        this._MINUTES_MIN = Pref.DELAY_MINUTES_MIN;
-        this._HOURS_MAX = Pref.DELAY_HOURS_MAX;
+        this._MINUTES_MIN = Settings.DELAY_MINUTES_MIN;
+        this._HOURS_MAX = Settings.DELAY_HOURS_MAX;
         this._HOURS_MIN = 1;
         this.setMinutes(minutes); // Set the real value.
     }
@@ -542,7 +538,7 @@ export class DelaySlider extends SliderItem {
      */
     setMinutes(minutes){
         // Validate:
-        if (isNaN(minutes) || !Pref.valid_minutes(minutes)){
+        if (isNaN(minutes) || !Settings.valid_minutes(minutes)){
             throw TypeError("'minutes' should be an integer between "
                 +this._MINUTES_MIN+" and "+this._HOURS_MAX*60);
         }

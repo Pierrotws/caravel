@@ -19,7 +19,7 @@
 */
 
 import GLib from 'gi://GLib';
-import * as Pref from './settings.js';
+import * as Settings from './settings.js';
 import {Me} from './utils.js'
 
 /**
@@ -52,14 +52,15 @@ export class Timer {
      * @see #setCallback
      * @private
      */
-    constructor(){
-        this._settings = new Pref.Settings(Me());
+    constructor() {
+        this._interval_id = null;
+        this._settings = new Settings.Settings(Me());
         this._delay = this._settings.getDelay();
         this._elapsed_minutes = this._settings.getElapsedTime();
         // Listen to changes and restart with new delay.
-        this._settings.bindKey(Pref.KEY_DELAY, (value) => {
+        this._settings.bindKey(Settings.KEY_DELAY, (value) => {
             var minutes = value.get_int32();
-            if (Pref.valid_minutes(minutes)){
+            if (Settings.valid_minutes(minutes)){
                 this._delay = minutes;
                 this.restart();
             }
@@ -70,8 +71,8 @@ export class Timer {
      * Set the callback-function for an exceeded delay.
      * @param callback the function to call when the delay has exceeded.
      */
-    setCallback(callback){
-        if (callback === undefined || callback === null || typeof callback !== "function"){
+    setCallback(callback) {
+        if (callback === undefined || callback === null || typeof callback !== "function") {
             throw TypeError("'callback' needs to be a function.");
         }
         this._callback = callback;
@@ -84,10 +85,10 @@ export class Timer {
      *  anything.
      * @see #setCallback
      */
-    begin(){
+    begin() {
         this.stop();
         this._start_timestamp = new Date();
-        if (this._elapsed_minutes >= this._delay){
+        if (this._elapsed_minutes >= this._delay) {
             /*
                 Just defensive programming, the value could be manipulated
                 See issue #12
@@ -103,9 +104,9 @@ export class Timer {
     /**
      * Stop the current timer. Repeated calls to this method don't have any effect.
      */
-    stop(){
-        if (this._interval_id !== null){
-            if (GLib.source_remove(this._interval_id) ){
+    stop() {
+        if (this._interval_id !== null) {
+            if (GLib.source_remove(this._interval_id)) {
                 this._interval_id = null;
                 // Calculate elapsed time:
                 let already = this._elapsed_minutes;
@@ -119,7 +120,7 @@ export class Timer {
     /**
      * A convenient way to restart the timer.
      */
-    restart(){
+    restart() {
         this._start_timestamp = new Date();
         this._elapsed_minutes = 0; // Reset the elapsed minutes.
         this.stop();
@@ -130,10 +131,10 @@ export class Timer {
      * The internal callback-function.
      * @private
      */
-    _callbackInternal(){
+    _callbackInternal() {
         this._callback();
         this._start_timestamp = new Date(); // Reset the time-stamp, see issue12
-        if (this._elapsed_minutes > 0){
+        if (this._elapsed_minutes > 0) {
             // The interval was started with a shortened delay. Restart it with the actual delay:
             this._elapsed_minutes = 0;
             this.begin();
