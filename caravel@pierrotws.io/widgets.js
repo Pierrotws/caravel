@@ -35,7 +35,7 @@ import * as Settings from './settings.js';
 /**
  * A Button to open the "gnome-shell-extension-prefs"-tool to configure this extension.
  */
-export class OpenPrefsWidget extends GObject.Object {
+export class PrefsButton extends GObject.Object {
     static {
         GObject.registerClass(this);
     }
@@ -49,12 +49,11 @@ export class OpenPrefsWidget extends GObject.Object {
         this.item = new PopupMenu.PopupBaseMenuItem();
         this._menu = menu;
         // The Label:
-        this._label = new St.Label({
-            text: _("Manage Wallpapers"),
-            style_class: 'middle-aligned',
+        this._icon = new St.Icon({
+            icon_name: 'emblem-system-symbolic',
+            style_class: 'popup-menu-icon',
         });
-
-        this.item.add_child(this._label);
+        this.item.add_child(this._icon);
 
         // Connect:
         this.item.connect('activate', this._onClick.bind(this));
@@ -196,7 +195,8 @@ export class WallpaperControlWidget extends GObject.Object {
         this._box = new St.BoxLayout({
             style_class: 'controls',
             x_expand: true,
-            y_expand: true
+            y_expand: false,
+            vertical: false
         });
 
         this.item.add_child(this._box);
@@ -205,13 +205,14 @@ export class WallpaperControlWidget extends GObject.Object {
         this._order_button = new ControlToggleButton(
             "media-playlist-shuffle", orderStateChanged
         );
-        //this.box.add_actor(this._order_button.actor);
+        this._box.add_child(this._order_button.actor);
+        
         let timer_button = new StateControlButton(
             [
                 {
                     name: STOP_TIMER_STATE,
                     icon: "media-playback-pause"
-                },{
+                }, {
                     name: START_TIMER_STATE,
                     icon: "media-playback-start"
                 }
@@ -221,9 +222,12 @@ export class WallpaperControlWidget extends GObject.Object {
         );
         timer_button.setState(STOP_TIMER_STATE);
         this._box.add_child(timer_button.actor);
-        let skipButton = new ControlButton("media-skip-forward");
-        skipButton.actor.connect('clicked', wallpaperChanged);
-        this._box.add_child(skipButton.actor);
+        let skip_button = new ControlButton("media-skip-forward", wallpaperChanged);
+        this._box.add_child(skip_button.actor);
+        //add spacer
+        this._box.add_child(new St.BoxLayout({ x_expand: true }));
+        let prefs_button = new PrefsButton();
+        this._box.add_child(prefs_button.item);
     }
 
     /**
@@ -289,6 +293,7 @@ export class ControlButton extends GObject.Object {
         });
         this.icon.set_style('padding: 0px');
         this.actor.set_style('padding: 8px'); // Put less space between buttons
+        this.actor.connect('clicked', callback);
     }
 
     /**

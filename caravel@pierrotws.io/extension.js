@@ -71,6 +71,21 @@ class CaravelButton extends PanelMenu.Button {
             }
         });
         this.menu.addMenuItem(next_wp_widget.item);
+        //Add Delay slider
+        let minutes = 0;
+        let unit = _("minutes");
+        if (settings.getDelay() > 60 ) {
+            minutes = Math.floor(settings.getDelay() / 60);
+            unit = _("hours");
+        } else {
+            minutes = settings.getDelay();
+        }
+        let delay_slider_label = new Widget.LabelWidget(_("Delay (%d %s)").format(minutes, unit) );
+        this.menu.addMenuItem(delay_slider_label.item);
+        let delay_slider = new Widget.DelaySlider(settings.getDelay() );
+        this.menu.addMenuItem(delay_slider.item);
+        // ---------------------------------------
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
         let control = new Widget.WallpaperControlWidget(function() {
             wallpaper_control.next();
@@ -92,22 +107,6 @@ class CaravelButton extends PanelMenu.Button {
         });
         control.setOrderState(settings.isRandom());
         this.menu.addMenuItem(control.item);
-        // ---------------------------------------
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        
-        let minutes = 0;
-        let unit = _("minutes");
-        if (settings.getDelay() > 60 ) {
-            minutes = Math.floor(settings.getDelay() / 60);
-            unit = _("hours");
-        } else {
-            minutes = settings.getDelay();
-        }
-        let delay_slider_label = new Widget.LabelWidget(_("Delay (%d %s)").format(minutes, unit) );
-
-        this.menu.addMenuItem(delay_slider_label.item);
-        let delay_slider = new Widget.DelaySlider(settings.getDelay() );
-        this.menu.addMenuItem(delay_slider.item);
 
         // React on control-interaction:
         timer.setCallback(function() {
