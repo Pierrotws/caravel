@@ -19,7 +19,6 @@
 */
 
 import Gio from 'gi://Gio';
-import { BackgroundXml } from './background.js';
 
 export const KEY_DELAY = "delay";
 export const KEY_RANDOM = "random";
@@ -79,7 +78,7 @@ export class Settings {
             }
         });
     }
-
+    
     /**
      * <p>Binds the given 'callback'-function to the "changed"-signal on the given
      *  key.</p>
@@ -220,8 +219,8 @@ export class Settings {
      */
     setWallpaper(bg) {
         // Validate
-        if (bg === undefined || bg === null ||  !(bg instanceof BackgroundXml)) {
-            throw TypeError("param should be a BackgroundXml Got: '"+bg+"'");
+        if (bg === undefined || bg === null ) { //||  !(bg instanceof BackgroundXml)) {
+            throw TypeError("param should be a valid BackgroundXml. Got: '"+bg+"'");
         }
         this._writeKey(this._background_setting, KEY_WALLPAPER, "file://"+bg.filename_light);
         this._writeKey(this._background_setting, KEY_WALLPAPER_DARK, "file://"+bg.filename_dark);

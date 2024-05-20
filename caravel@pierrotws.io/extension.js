@@ -104,7 +104,7 @@ class CaravelButton extends PanelMenu.Button {
             }
             // Also write the new setting:
             settings.setRandom(state);
-        });
+        }, this.menu);
         control.setOrderState(settings.isRandom());
         this.menu.addMenuItem(control.item);
 

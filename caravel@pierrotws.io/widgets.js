@@ -20,7 +20,6 @@
 
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Slider from 'resource:///org/gnome/shell/ui/slider.js';
-import * as Util from 'resource:///org/gnome/shell/misc/util.js';
 import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 import {Me, mergeImage} from './utils.js';
 
@@ -45,8 +44,9 @@ export class PrefsButton extends GObject.Object {
      * @param menu the menu to be toggled when the button is pressed.
      * @private
      */
-    _init(menu){
+    _init(menu) {
         this.item = new PopupMenu.PopupBaseMenuItem();
+        this._extension = Me();
         this._menu = menu;
         // The Label:
         this._icon = new St.Icon({
@@ -59,17 +59,14 @@ export class PrefsButton extends GObject.Object {
         this.item.connect('activate', this._onClick.bind(this));
     }
 
-    _onClick(){
-        this.launchExtensionPrefs("caravel@pierrotws.io");
-        this._menu.toggle(); // Toggle the menu.
-    }
-
-    /**
-     * <p>Launches the "gnome-shell-extension-prefs"-tool with the settings for the extension
-     *  with the given uuid.</p>
-     */
-    launchExtensionPrefs(uuid) {
-        Util.trySpawnCommandLine("gnome-shell-extension-prefs "+uuid);
+    _onClick() {
+        if(this._menu !== null) {
+            this._menu.close(); // Close the menu.
+            this._extension.openPreferences();
+        }
+        else {
+            console.warn("menu is null, maybe a problem");
+        }
     }
 }
 
@@ -189,7 +186,7 @@ export class WallpaperControlWidget extends GObject.Object {
      * Creates a new control-widget.
      * @private
      */
-    _init(wallpaperChanged, timerStateChanged, orderStateChanged){
+    _init(wallpaperChanged, timerStateChanged, orderStateChanged, menu) {
         this.item = new PopupMenu.PopupBaseMenuItem({reactive: false});
         // Add the layout:
         this._box = new St.BoxLayout({
@@ -226,7 +223,7 @@ export class WallpaperControlWidget extends GObject.Object {
         this._box.add_child(skip_button.actor);
         //add spacer
         this._box.add_child(new St.BoxLayout({ x_expand: true }));
-        let prefs_button = new PrefsButton();
+        let prefs_button = new PrefsButton(menu);
         this._box.add_child(prefs_button.item);
     }
 
