@@ -19,8 +19,10 @@
 */
 
 import GLib from 'gi://GLib';
+
+import { KEY_DELAY } from './define.js';
 import * as Settings from './settings.js';
-import {Me} from './utils.js'
+import { Me, valid_minutes } from './utils.js'
 
 /**
  * A simple interface for a timer which will call the given callback-function in
@@ -58,9 +60,9 @@ export class Timer {
         this._delay = this._settings.getDelay();
         this._elapsed_minutes = this._settings.getElapsedTime();
         // Listen to changes and restart with new delay.
-        this._settings.bindKey(Settings.KEY_DELAY, (value) => {
+        this._settings.bindKey(KEY_DELAY, (value) => {
             var minutes = value.get_int32();
-            if (Settings.valid_minutes(minutes)){
+            if (valid_minutes(minutes)){
                 this._delay = minutes;
                 this.restart();
             }

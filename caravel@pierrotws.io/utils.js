@@ -19,16 +19,13 @@
 
 import Cairo from 'gi://cairo';
 import Gdk from 'gi://Gdk';
-import GdkPixbuf from 'gi://GdkPixbuf';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const ByteArray = imports.byteArray;
+import { EXTENSION_UUID, DELAY_MINUTES_MIN, DELAY_MINUTES_MAX } from './define.js';
 
-export const EXTENSION_UUID = 'caravel@pierrotws.io';
-const ATTRIBUTE_KEY = "@";
-const CHILD_NODE_KEY = "#";
+const ByteArray = imports.byteArray;
 const UNESCAPE = {
     "&amp;": "&",
     "&lt;": "<",
@@ -43,6 +40,10 @@ export function Me() {
         self._me = Extension.lookupByUUID(EXTENSION_UUID);
     }
     return self._me;
+}
+
+export function valid_minutes(minutes) {
+    return minutes >= DELAY_MINUTES_MIN && minutes <= DELAY_MINUTES_MAX;
 }
 
 /**
@@ -82,7 +83,6 @@ export function readXMLFile(filePath) {
         xmlText = ByteArray.toString(xmlText);    
     return parseXML(xmlText);
 }
-
 
 export function listXmlFiles(directoryPath) {
     let xmlFilePaths = [];
@@ -205,4 +205,3 @@ function unescapeXML(str) {
         return UNESCAPE[str] || str;
     });
 }
-

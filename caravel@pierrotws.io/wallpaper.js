@@ -18,9 +18,9 @@
  * along with Caravel. If not, see <http://www.gnu.org/licenses/>.
 */
 
+import { KEY_BACKGROUND_DIR } from './define.js';
 import * as Settings from './settings.js';
 import * as Notify from './notification.js';
-import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 import {Me, listXmlFiles} from './utils.js';
 import { createFromXML } from './background.js';
 
@@ -42,7 +42,7 @@ export class Wallpaper {
         this._is_random = false;
         this._preview_callback = null;
         // Catch changes happening in the config-tool and update the list
-        this._settings.bindKey(Settings.KEY_BACKGROUND_DIR, () => {
+        this._settings.bindKey(KEY_BACKGROUND_DIR, () => {
             this._queue.length = 0; // Clear the array, see http://stackoverflow.com/a/1234337/717341
             this._loadQueue();
             this._triggerPreviewCallback();

@@ -28,13 +28,11 @@
 import Adw from 'gi://Adw';
 import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-//import * as Settings from './settings.js';
-
 export default class CaravelExtensionPreferences extends ExtensionPreferences {
 
     fillPreferencesWindow(window) {
-        //extension = ExtensionPreferences.lookupByUUID('example@gjs.guide');
-        //this._setting = this.getSettings();
+        //let extension = ExtensionPreferences.lookupByUUID(EXTENSION_UUID);
+        //this._setting = extension.getSettings();
         let page = new Adw.PreferencesPage({title: 'Caravel Settings'});
         window.add(page);
         const group = new Adw.PreferencesGroup({
@@ -49,5 +47,4 @@ export default class CaravelExtensionPreferences extends ExtensionPreferences {
         });
         group.add(row);
     }
-
 }

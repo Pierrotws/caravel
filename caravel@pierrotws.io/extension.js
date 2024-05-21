@@ -22,13 +22,14 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
 import St from 'gi://St';
 
 // Import own libs:
 import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
-import {Me} from './utils.js';
+
+import { KEY_DELAY } from './define.js';
+import { Me, valid_minutes } from './utils.js';
 import * as Widget from './widgets.js';
 import * as Wallpaper from './wallpaper.js';
 import * as Settings from './settings.js';
@@ -72,13 +73,11 @@ class CaravelButton extends PanelMenu.Button {
         });
         this.menu.addMenuItem(next_wp_widget.item);
         //Add Delay slider
-        let minutes = 0;
+        let minutes = settings.getDelay();
         let unit = _("minutes");
-        if (settings.getDelay() > 60 ) {
-            minutes = Math.floor(settings.getDelay() / 60);
+        if (minutes > 60) {
+            minutes = Math.floor(minutes / 60);
             unit = _("hours");
-        } else {
-            minutes = settings.getDelay();
         }
         let delay_slider_label = new Widget.LabelWidget(_("Delay (%d %s)").format(minutes, unit) );
         this.menu.addMenuItem(delay_slider_label.item);
@@ -132,9 +131,9 @@ class CaravelButton extends PanelMenu.Button {
           delay_slider.connect('notify::value', valueChanged);
         }
 
-        settings.bindKey(Settings.KEY_DELAY, (value) => {
+        settings.bindKey(KEY_DELAY, (value) => {
             var minutes = value.get_int32();
-            if (Settings.valid_minutes(minutes)) {
+            if (valid_minutes(minutes)) {
                 delay_slider.setMinutes(minutes);
             }
         });

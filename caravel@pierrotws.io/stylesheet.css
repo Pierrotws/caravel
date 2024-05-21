@@ -19,3 +19,8 @@
     text-align: center;
     span: -1;
 }
+
+.button-box { 
+    padding: 0px; 
+    spacing: 22px; 
+}

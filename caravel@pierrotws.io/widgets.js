@@ -20,8 +20,9 @@
 
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Slider from 'resource:///org/gnome/shell/ui/slider.js';
-import {gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
-import {Me, mergeImage} from './utils.js';
+import { gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
+import { DELAY_MINUTES_MIN, DELAY_HOURS_MAX } from './define.js';
+import { Me, mergeImage, valid_minutes } from './utils.js';
 
 import St from 'gi://St';
 import GObject from 'gi://GObject';
@@ -163,6 +164,7 @@ export class NextWallpaperWidget extends GObject.Object {
 
 const STOP_TIMER_STATE = "stop";
 const START_TIMER_STATE = "start";
+
 /**
  * The whole widget including the loop/random, pause/play and next buttons.
  * This widget will emit multiple signals to be handled in a central place:
@@ -190,10 +192,8 @@ export class WallpaperControlWidget extends GObject.Object {
         this.item = new PopupMenu.PopupBaseMenuItem({reactive: false});
         // Add the layout:
         this._box = new St.BoxLayout({
-            style_class: 'controls',
             x_expand: true,
-            y_expand: false,
-            vertical: false
+            style_class: 'menu-button-container'
         });
 
         this.item.add_child(this._box);
@@ -432,12 +432,13 @@ export class ControlToggleButton extends GObject.Object {
     _init(icon, callback){
         this.icon = new St.Icon({
             icon_name: icon + "-symbolic", // Get the symbol-icons.
+            style_class: "popup-menu-icon",
             icon_size: 20
         });
 
         this.actor = new St.Button({
             toggle_mode: true,
-            style_class: 'notification-icon-button untoggled', // buttons styled like in Rhythmbox-notifications
+            style_class: 'message-list-clear-button button button-action',
             child: this.icon
         });
         this.icon.set_style('padding: 0px');
@@ -528,8 +529,8 @@ export class DelaySlider extends SliderItem {
     _init(minutes){
         super._init(0); // value MUST be specified!
         this._MINUTES_MAX = 59;
-        this._MINUTES_MIN = Settings.DELAY_MINUTES_MIN;
-        this._HOURS_MAX = Settings.DELAY_HOURS_MAX;
+        this._MINUTES_MIN = DELAY_MINUTES_MIN;
+        this._HOURS_MAX = DELAY_HOURS_MAX;
         this._HOURS_MIN = 1;
         this.setMinutes(minutes); // Set the real value.
     }
@@ -540,7 +541,7 @@ export class DelaySlider extends SliderItem {
      */
     setMinutes(minutes){
         // Validate:
-        if (isNaN(minutes) || !Settings.valid_minutes(minutes)){
+        if (isNaN(minutes) || !valid_minutes(minutes)){
             throw TypeError("'minutes' should be an integer between "
                 +this._MINUTES_MIN+" and "+this._HOURS_MAX*60);
         }

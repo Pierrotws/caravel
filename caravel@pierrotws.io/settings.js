@@ -19,36 +19,32 @@
 */
 
 import Gio from 'gi://Gio';
+import { valid_minutes } from './utils.js';
 
-export const KEY_DELAY = "delay";
-export const KEY_RANDOM = "random";
-export const KEY_BACKGROUND_DIR = "background-properties-path";
-export const KEY_WALLPAPER = "picture-uri";
-export const KEY_WALLPAPER_DARK = "picture-uri-dark";
-export const KEY_OPTIONS = "picture-options"
-export const KEY_SHADE_TYPE = "color-shading-type"
-export const KEY_PCOLOR = "primary-color"
-export const KEY_SCOLOR = "secondary-color"
-
-export const KEY_ELAPSED_TIME = "elapsed-time";
-export const KEY_CHANGE_LOCKSCREEN = "change-lockscreen";
-
-export const BACKGROUND_PROPERTIES_DEFAULT = "/usr/share/gnome-background-properties";
-export const DELAY_MINUTES_MIN = 1;
-export const DELAY_MINUTES_DEFAULT = 5;
-export const DELAY_HOURS_MAX = 24;
-export const DELAY_MINUTES_MAX = DELAY_HOURS_MAX * 60;
-
-export function valid_minutes(minutes) {
-    return minutes >= DELAY_MINUTES_MIN && minutes <= DELAY_MINUTES_MAX;
-}
+import {
+    KEY_DELAY,
+    KEY_RANDOM,
+    KEY_BACKGROUND_DIR,
+    KEY_WALLPAPER,
+    KEY_WALLPAPER_DARK,
+    KEY_OPTIONS,
+    KEY_SHADE_TYPE,
+    KEY_PCOLOR,
+    KEY_SCOLOR,
+    KEY_ELAPSED_TIME,
+    KEY_CHANGE_LOCKSCREEN,
+    DELAY_MINUTES_MIN,
+    DELAY_MINUTES_DEFAULT,
+    DELAY_MINUTES_MAX,
+    BG_SCHEMA,
+    SCHEMA_NAME,
+    SCREENSAVER_SCHEMA 
+} from './define.js';
 
 /**
  * This class takes care of reading/writing the settings from/to the GSettings backend.
  */
 export class Settings {
-
-    static _schemaName = "org.gnome.shell.extensions.caravel";
 
     /**
      * Creates a new Settings-object to access the settings of this extension.
@@ -60,17 +56,17 @@ export class Settings {
         let schemaSource = Gio.SettingsSchemaSource.new_from_directory(
             schemaDir, Gio.SettingsSchemaSource.get_default(), false
         );
-        let schema = schemaSource.lookup(Settings._schemaName, false);
+        let schema = schemaSource.lookup(SCHEMA_NAME, false);
 
         this._setting = new Gio.Settings({
             settings_schema: schema
         });
         this._background_setting = new Gio.Settings({
-            schema: "org.gnome.desktop.background"
+            schema: BG_SCHEMA
         });
         this._screensaver_setting = new Gio.Settings({
-            schema: "org.gnome.desktop.screensaver"
-        });
+            schema: SCREENSAVER_SCHEMA
+        })
         this.bindKey(KEY_DELAY, (value) => {
             var minutes = value.get_int32();
             if (!valid_minutes(minutes)) {
@@ -102,14 +98,6 @@ export class Settings {
         this._setting.connect("changed::"+key, function(source, key){
             callback( source.get_value(key) );
         });
-    }
-
-    isDarkMode() {
-        return (this._setting.get_string(DARK_KEY) !== "prefer-dark")
-    }
-
-    getKeyWallpaper() {
-        return this.isDarkMode() ? KEY_WALLPAPER_DARK : KEY_WALLPAPER;
     }
 
     /**
@@ -205,9 +193,7 @@ export class Settings {
         if (propPath === undefined || propPath === null || typeof propPath !== "string"){
             throw TypeError("propPath should be a string variable. Got: "+propPath);
         }
-        // Set:
-        let key = KEY_BACKGROUND_DIR;
-        this._writeKey(this._setting, key, propPath);
+        this._writeKey(this._setting, KEY_BACKGROUND_DIR, propPath);
         Gio.Settings.sync();
     }
 
