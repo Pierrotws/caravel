@@ -23,26 +23,32 @@
  */
 
 export const EXTENSION_UUID = 'caravel@pierrotws.io';
-
-export const SCHEMA_NAME = "org.gnome.shell.extensions.caravel";
-export const SCREENSAVER_SCHEMA = "org.gnome.desktop.screensaver";
+export const MY_SCHEMA = "org.gnome.shell.extensions.caravel";
 export const BG_SCHEMA = "org.gnome.desktop.background";
+export const SCREENSAVER_SCHEMA = "org.gnome.desktop.screensaver";
+export const INTERFACE_SCHEMA = "org.gnome.desktop.interface";
 
-export const KEY_MODE = "color-scheme"
+/* Caravel settings dconf keys */
 export const KEY_DELAY = "delay";
 export const KEY_RANDOM = "random";
-export const KEY_BACKGROUND_DIR = "background-properties-path";
-export const KEY_WALLPAPER = "picture-uri";
-export const KEY_WALLPAPER_DARK = "picture-uri-dark";
-export const KEY_OPTIONS = "picture-options"
-export const KEY_SHADE_TYPE = "color-shading-type"
-export const KEY_PCOLOR = "primary-color"
-export const KEY_SCOLOR = "secondary-color"
-
 export const KEY_ELAPSED_TIME = "elapsed-time";
 export const KEY_CHANGE_LOCKSCREEN = "change-lockscreen";
-
+export const KEY_BACKGROUND_DIR = "background-properties-path";
+export const KEY_PREVIEW_BOTH = "preview-both-wallpapers";
 export const BACKGROUND_PROPERTIES_DEFAULT = "/usr/share/gnome-background-properties";
+
+/* background/screensaver dconf keys */
+export const BG_KEY_WALLPAPER = "picture-uri";
+export const BG_KEY_WALLPAPER_DARK = "picture-uri-dark";
+export const BG_KEY_OPTIONS = "picture-options";
+export const BG_KEY_SHADE_TYPE = "color-shading-type";
+export const BG_KEY_PCOLOR = "primary-color";
+export const BG_KEY_SCOLOR = "secondary-color";
+
+/* interface dconf keys */
+export const INTERFACE_KEY_MODE = "color-scheme";
+
+/* Timer defaults */
 export const DELAY_MINUTES_MIN = 1;
 export const DELAY_MINUTES_DEFAULT = 5;
 export const DELAY_HOURS_MAX = 24;

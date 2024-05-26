@@ -25,20 +25,23 @@ import {
     KEY_DELAY,
     KEY_RANDOM,
     KEY_BACKGROUND_DIR,
-    KEY_WALLPAPER,
-    KEY_WALLPAPER_DARK,
-    KEY_OPTIONS,
-    KEY_SHADE_TYPE,
-    KEY_PCOLOR,
-    KEY_SCOLOR,
+    KEY_PREVIEW_BOTH,
+    BG_KEY_WALLPAPER,
+    BG_KEY_WALLPAPER_DARK,
+    BG_KEY_OPTIONS,
+    BG_KEY_SHADE_TYPE,
+    BG_KEY_PCOLOR,
+    BG_KEY_SCOLOR,
     KEY_ELAPSED_TIME,
     KEY_CHANGE_LOCKSCREEN,
     DELAY_MINUTES_MIN,
     DELAY_MINUTES_DEFAULT,
     DELAY_MINUTES_MAX,
     BG_SCHEMA,
-    SCHEMA_NAME,
-    SCREENSAVER_SCHEMA 
+    MY_SCHEMA,
+    SCREENSAVER_SCHEMA, 
+    INTERFACE_SCHEMA,
+    INTERFACE_KEY_MODE
 } from './define.js';
 
 /**
@@ -56,16 +59,19 @@ export class Settings {
         let schemaSource = Gio.SettingsSchemaSource.new_from_directory(
             schemaDir, Gio.SettingsSchemaSource.get_default(), false
         );
-        let schema = schemaSource.lookup(SCHEMA_NAME, false);
+        let schema = schemaSource.lookup(MY_SCHEMA, false);
 
-        this._setting = new Gio.Settings({
+        this._settings = new Gio.Settings({
             settings_schema: schema
         });
-        this._background_setting = new Gio.Settings({
+        this._bg_settings = new Gio.Settings({
             schema: BG_SCHEMA
         });
-        this._screensaver_setting = new Gio.Settings({
+        this._screensaver_settings = new Gio.Settings({
             schema: SCREENSAVER_SCHEMA
+        })
+        this._interface_settings = new Gio.Settings({
+            schema: INTERFACE_SCHEMA
         })
         this.bindKey(KEY_DELAY, (value) => {
             var minutes = value.get_int32();
@@ -95,7 +101,7 @@ export class Settings {
             throw TypeError("'callback' needs to be a function. Got: "+callback);
         }
         // Bind:
-        this._setting.connect("changed::"+key, function(source, key){
+        this._settings.connect("changed::"+key, function(source, key){
             callback( source.get_value(key) );
         });
     }
@@ -105,7 +111,7 @@ export class Settings {
      * @returns int the delay in minutes.
      */
     getDelay() {
-        var minutes = this._setting.get_int(KEY_DELAY);
+        var minutes = this._settings.get_int(KEY_DELAY);
         if (!valid_minutes(minutes)) {
                 this.setDelay(DELAY_MINUTES_DEFAULT);
                 return DELAY_MINUTES_DEFAULT;
@@ -118,7 +124,7 @@ export class Settings {
      * @returns b true if lockscreen must be set also
      */
     getChangeLockScreen() {
-        return this._setting.get_boolean(KEY_CHANGE_LOCKSCREEN);
+        return this._settings.get_boolean(KEY_CHANGE_LOCKSCREEN);
     }
     /**
      * Set the new delay in minutes.
@@ -132,9 +138,9 @@ export class Settings {
         }
         // Set:
         let key = KEY_DELAY;
-        if (this._setting.get_int(key) == delay) { return; }
-        if (this._setting.is_writable(key)){
-            if (this._setting.set_int(key, delay)){
+        if (this._settings.get_int(key) == delay) { return; }
+        if (this._settings.is_writable(key)){
+            if (this._settings.set_int(key, delay)){
                 Gio.Settings.sync();
             } else {
                 throw this._errorSet(key);
@@ -149,9 +155,9 @@ export class Settings {
      * @returns boolean true if random, false otherwise.
      */
     isRandom(){
-        return this._setting.get_boolean(KEY_RANDOM);
+        return this._settings.get_boolean(KEY_RANDOM);
     }
-
+    
     /**
      * Specify, whether the order of the image-list should be random or not.
      * @param isRandom true if random, false otherwise.
@@ -164,8 +170,39 @@ export class Settings {
         }
         // Set:
         let key = KEY_RANDOM;
-        if (this._setting.is_writable(key)){
-            if (this._setting.set_boolean(key, isRandom)){
+        if (this._settings.is_writable(key)){
+            if (this._settings.set_boolean(key, isRandom)){
+                Gio.Settings.sync();
+            } else {
+                throw this._errorSet(key);
+            }
+        } else {
+            throw this._errorWritable(key);
+        }
+    }
+
+    /**
+     * Specify, whether to preview both light and dark wallpapers or not
+     * @returns boolean true if both should be previewed, false otherwise.
+     */
+    shouldPreviewBoth() {
+        return this._settings.get_boolean(KEY_PREVIEW_BOTH);
+    }
+
+    /**
+     * Whether to preview both light and dark wallpapers or not.
+     * @param previewBoth true if both should be previewed, false otherwise.
+     * @throws TypeError if "previewBoth" is not a boolean value.
+     */
+    setPreviewBoth(previewBoth) {
+        // validate:
+        if (previewBoth === undefined || previewBoth === null || typeof previewBoth !== "boolean"){
+            throw TypeError("isRandom should be a boolean variable. Got: "+previewBoth);
+        }
+        // Set:
+        let key = KEY_PREVIEW_BOTH;
+        if (this._settings.is_writable(key)){
+            if (this._settings.set_boolean(key, previewBoth)){
                 Gio.Settings.sync();
             } else {
                 throw this._errorSet(key);
@@ -180,7 +217,7 @@ export class Settings {
      * @returns path of background properties files.
      */
     getBackgroundDir() {
-        return this._setting.get_string(KEY_BACKGROUND_DIR);
+        return this._settings.get_string(KEY_BACKGROUND_DIR);
     }
 
     /**
@@ -193,7 +230,7 @@ export class Settings {
         if (propPath === undefined || propPath === null || typeof propPath !== "string"){
             throw TypeError("propPath should be a string variable. Got: "+propPath);
         }
-        this._writeKey(this._setting, KEY_BACKGROUND_DIR, propPath);
+        this._writeKey(this._settings, KEY_BACKGROUND_DIR, propPath);
         Gio.Settings.sync();
     }
 
@@ -208,19 +245,19 @@ export class Settings {
         if (bg === undefined || bg === null ) { //||  !(bg instanceof BackgroundXml)) {
             throw TypeError("param should be a valid BackgroundXml. Got: '"+bg+"'");
         }
-        this._writeKey(this._background_setting, KEY_WALLPAPER, "file://"+bg.filename_light);
-        this._writeKey(this._background_setting, KEY_WALLPAPER_DARK, "file://"+bg.filename_dark);
-        this._writeKey(this._background_setting, KEY_OPTIONS, bg.options);
-        this._writeKey(this._background_setting, KEY_SHADE_TYPE, bg.shade_type);
-        this._writeKey(this._background_setting, KEY_PCOLOR, bg.pcolor);
-        this._writeKey(this._background_setting, KEY_SCOLOR, bg.scolor);
+        this._writeKey(this._bg_settings, BG_KEY_WALLPAPER, "file://"+bg.filename_light);
+        this._writeKey(this._bg_settings, BG_KEY_WALLPAPER_DARK, "file://"+bg.filename_dark);
+        this._writeKey(this._bg_settings, BG_KEY_OPTIONS, bg.options);
+        this._writeKey(this._bg_settings, BG_KEY_SHADE_TYPE, bg.shade_type);
+        this._writeKey(this._bg_settings, BG_KEY_PCOLOR, bg.pcolor);
+        this._writeKey(this._bg_settings, BG_KEY_SCOLOR, bg.scolor);
 
         if(this.getChangeLockScreen()) {
-            this._writeKey(this._screensaver_setting, KEY_WALLPAPER, "file://"+bg.filename_light);
-            this._writeKey(this._screensaver_setting, KEY_OPTIONS, bg.options);
-            this._writeKey(this._screensaver_setting, KEY_SHADE_TYPE, bg.shade_type);
-            this._writeKey(this._screensaver_setting, KEY_PCOLOR, bg.pcolor);
-            this._writeKey(this._screensaver_setting, KEY_SCOLOR, bg.scolor);
+            this._writeKey(this._screensaver_settings, BG_KEY_WALLPAPER, "file://"+bg.filename_light);
+            this._writeKey(this._screensaver_settings, BG_KEY_OPTIONS, bg.options);
+            this._writeKey(this._screensaver_settings, BG_KEY_SHADE_TYPE, bg.shade_type);
+            this._writeKey(this._screensaver_settings, BG_KEY_PCOLOR, bg.pcolor);
+            this._writeKey(this._screensaver_settings, BG_KEY_SCOLOR, bg.scolor);
         }
         Gio.Settings.sync(); // Necessary: http://stackoverflow.com/questions/9985140
     }
@@ -247,7 +284,7 @@ export class Settings {
      * @return int the elapsed time in minutes.
      */
     getElapsedTime() {
-        return this._setting.get_int(KEY_ELAPSED_TIME);
+        return this._settings.get_int(KEY_ELAPSED_TIME);
     }
 
     /**
@@ -261,8 +298,8 @@ export class Settings {
             throw TypeError("'time' needs to be a number, greater than 0. Given: "+time);
         }
         // Write:
-        if (this._setting.is_writable(KEY_ELAPSED_TIME)){
-            if (this._setting.set_int(KEY_ELAPSED_TIME, time)){
+        if (this._settings.is_writable(KEY_ELAPSED_TIME)){
+            if (this._settings.set_int(KEY_ELAPSED_TIME, time)){
                 Gio.Settings.sync();
             } else {
                 throw this._errorSet(key);
@@ -270,6 +307,10 @@ export class Settings {
         } else {
             throw this._errorWritable(key);
         }
+    }
+
+    isDarkMode() {
+        return (this._interface_settings.get_string(INTERFACE_KEY_MODE) == "prefer-dark");
     }
 
     _errorWritable(key) {

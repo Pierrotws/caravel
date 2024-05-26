@@ -18,6 +18,10 @@
             <summary>background-properties path</summary>
             <description>Path of background-properties directory, that should contain xml background description</description>
         </key>
+        <key name="preview-both-wallpapers" type="b">
+            <default>false</default>
+            <summary>Whether to preview both light and dark wallpapers. Implies more image processing.</summary>
+        </key>
         <key name="elapsed-time" type="i">
             <default>0</default>
             <summary>Minutes elapsed from the last delay.</summary>
