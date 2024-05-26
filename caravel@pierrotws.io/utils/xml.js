@@ -17,15 +17,12 @@
  * along with Caravel. If not, see <http://www.gnu.org/licenses/>.
 */
 
-import Cairo from 'gi://cairo';
-import Gdk from 'gi://Gdk';
-import Gio from 'gi://Gio';
-import GLib from 'gi://GLib';
-import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
-
-import { EXTENSION_UUID, DELAY_MINUTES_MIN, DELAY_MINUTES_MAX } from './define.js';
+import Gio from "gi://Gio";
+import GLib from "gi://GLib";
+import { BackgroundXml } from "../background.js";
 
 const ByteArray = imports.byteArray;
+
 const UNESCAPE = {
     "&amp;": "&",
     "&lt;": "<",
@@ -33,56 +30,6 @@ const UNESCAPE = {
     "&apos;": "'",
     "&quot;": '"'
 };
-
-export function Me() {
-    let self = Me;
-    if (self._me == null) {
-        self._me = Extension.lookupByUUID(EXTENSION_UUID);
-    }
-    return self._me;
-}
-
-export function valid_minutes(minutes) {
-    return minutes >= DELAY_MINUTES_MIN && minutes <= DELAY_MINUTES_MAX;
-}
-
-/**
- * Generate a merged image from 2 image
- * @param left to use. only half left will be used.
- * @param right to use. only half right will be used.
- * @throws Error if dimensions of images in parameters differ
- */
-export function mergeImage(left, right) {
-    // Ensure both images are the same size
-    if (left.get_width() !== right.get_width() || left.get_height() !== right.get_height()) {
-        throw new Error("Images must have the same dimensions");
-    }
-    let width = left.get_width();
-    let height = left.get_height();
-    // Create a new surface to draw the merged image
-    let surface = new Cairo.ImageSurface(Cairo.Format.ARGB32, width, height);
-    let context = new Cairo.Context(surface);
-
-    Gdk.cairo_set_source_pixbuf(context, left, 0, 0);
-    // Draw the left half of image1
-    context.rectangle(0, 0, width / 2, height);
-    context.fill();
-    // Draw the right half of image2
-    Gdk.cairo_set_source_pixbuf(context, right, 0, 0);
-    context.rectangle(width / 2, 0, width / 2, height);
-    context.fill();
-    // Paint the context onto the surface
-    //cr.paint();
-    return Gdk.pixbuf_get_from_surface(surface, 0, 0, width, height);
-}
-
-export function readXMLFile(filePath) {
-    // Open the file
-    let xmlText = GLib.file_get_contents(filePath)[1];
-    if (xmlText instanceof Uint8Array)
-        xmlText = ByteArray.toString(xmlText);    
-    return parseXML(xmlText);
-}
 
 export function listXmlFiles(directoryPath) {
     let xmlFilePaths = [];
@@ -111,26 +58,48 @@ export function listXmlFiles(directoryPath) {
     return xmlFilePaths;
 }
 
+export function newBackgroundXmlFromFile(filepath) {
+    let content = readXMLFile(filepath);
+    //ignore metadata, get data only
+    content = content.f;
+    for (let i = 0; i < content.length; i++) {
+        let child = content[i];
+        //ignore anything else than "wallpapers" node
+        if (child.n == "wallpapers") {
+            //"wallpapers" node has one child only for now, the wallpaper
+            return new BackgroundXml(filepath, child.f[0].f);
+        }
+    }
+}
+
+
+function readXMLFile(filePath) {
+    // Open the file
+    let xmlText = GLib.file_get_contents(filePath)[1];
+    if (xmlText instanceof Uint8Array)
+        xmlText = ByteArray.toString(xmlText);
+    return parseXML(xmlText);
+}
 
 function parseXML(text) {
     const list = String.prototype.split.call(text, /<([^!<>?](?:'[\S\s]*?'|"[\S\s]*?"|[^'"<>])*|!(?:--[\S\s]*?--|\[[^\[\]'"<>]+\[[\S\s]*?]]|DOCTYPE[^\[<>]*?\[[\S\s]*?]|(?:ENTITY[^"<>]*?"[\S\s]*?")?[\S\s]*?)|\?[\S\s]*?\?)>/);
     const length = list.length;
 
     // root element
-    const root = {f: []};
+    const root = { f: [] };
     let elem = root;
 
     // dom tree stack
     const stack = [];
 
     for (let i = 0; i < length;) {
-      // text node
-      const str = list[i++];
-      if (str) appendText(str);
+        // text node
+        const str = list[i++];
+        if (str) appendText(str);
 
-      // child node
-      const tag = list[i++];
-      if (tag) parseNode(tag);
+        // child node
+        const tag = list[i++];
+        if (tag) parseNode(tag);
     }
 
     return root;
@@ -139,7 +108,7 @@ function parseXML(text) {
         const tagLength = tag.length;
         const firstChar = tag[0];
         if (firstChar === "/") {
-        // close tag
+            // close tag
             const closed = tag.replace(/^\/|[\s\/].*$/g, "").toLowerCase();
             while (stack.length) {
                 const tagName = elem.n && elem.n.toLowerCase();
@@ -148,14 +117,14 @@ function parseXML(text) {
             }
         } else if (firstChar === "?") {
             // XML declaration
-            appendChild({n: "?", r: tag.substr(1, tagLength - 2)});
+            appendChild({ n: "?", r: tag.substr(1, tagLength - 2) });
         } else if (firstChar === "!") {
             if (tag.substr(1, 7) === "[CDATA[" && tag.substr(-2) === "]]") {
                 // CDATA section
                 appendText(tag.substr(8, tagLength - 10));
             } else {
                 // comment
-                appendChild({n: "!", r: tag.substr(1)});
+                appendChild({ n: "!", r: tag.substr(1) });
             }
         } else {
             const child = openTag(tag);
@@ -180,7 +149,7 @@ function parseXML(text) {
 }
 
 function openTag(tag) {
-    const elem = {f: []};
+    const elem = { f: [] };
     tag = tag.replace(/\s*\/?$/, "");
     const pos = tag.search(/[\s='"\/]/);
     if (pos < 0) {
@@ -192,12 +161,13 @@ function openTag(tag) {
     return elem;
 }
 
+
 function removeSpaces(str) {
     return str && str.replace(/^\s+|\s+$/g, "");
 }
 
 function unescapeXML(str) {
-    return str.replace(/(&(?:lt|gt|amp|apos|quot|#(?:\d{1,6}|x[0-9a-fA-F]{1,5}));)/g, function(str) {
+    return str.replace(/(&(?:lt|gt|amp|apos|quot|#(?:\d{1,6}|x[0-9a-fA-F]{1,5}));)/g, function (str) {
         if (str[1] === "#") {
             const code = (str[2] === "x") ? parseInt(str.substr(3), 16) : parseInt(str.substr(2), 10);
             if (code > -1) return String.fromCharCode(code);
@@ -205,3 +175,4 @@ function unescapeXML(str) {
         return UNESCAPE[str] || str;
     });
 }
+

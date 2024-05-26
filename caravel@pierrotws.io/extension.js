@@ -29,11 +29,12 @@ import St from 'gi://St';
 import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import { KEY_DELAY } from './define.js';
-import { Me, valid_minutes } from './utils.js';
+import { valid_minutes } from './define.js';
+import { Me } from './utils/me.js';
+import { Wallpaper } from './wallpaper.js';
+import { Settings } from './settings.js';
+import { Timer } from './timer.js';
 import * as Widget from './widgets.js';
-import * as Wallpaper from './wallpaper.js';
-import * as Settings from './settings.js';
-import * as Time from './timer.js';
 
 let wallpaper_control;
 let settings;
@@ -165,9 +166,9 @@ export default class CaravelExtension extends Extension {
      * Called when the extension is activated (maybe multiple times)
      */
     enable() {
-        wallpaper_control = new Wallpaper.Wallpaper();
-        settings = new Settings.Settings(this);
-        timer = new Time.Timer();
+        settings = new Settings(this);
+        wallpaper_control = new Wallpaper(settings);
+        timer = new Timer(settings);
         menu_button = new CaravelButton(this);
         Main.panel.addToStatusArea('caravel', menu_button, 1);
         timer.begin();

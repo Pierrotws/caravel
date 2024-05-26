@@ -29,6 +29,7 @@ export const SCREENSAVER_SCHEMA = "org.gnome.desktop.screensaver";
 export const INTERFACE_SCHEMA = "org.gnome.desktop.interface";
 
 /* Caravel settings dconf keys */
+export const KEY_CURRENT_BG = "last-background-xml-path";
 export const KEY_DELAY = "delay";
 export const KEY_RANDOM = "random";
 export const KEY_ELAPSED_TIME = "elapsed-time";
@@ -47,9 +48,8 @@ export const BG_KEY_SCOLOR = "secondary-color";
 
 /* 
  * background xml keys, because it's not the same -_-
- * And it's mixing camel-case and snake_case
- * ... let's say for a good reason?
  */
+export const BG_XML_NAME = "name";
 export const BG_XML_WALLPAPER = "filename";
 export const BG_XML_WALLPAPER_DARK = "filename-dark";
 export const BG_XML_OPTIONS = "options";
@@ -66,3 +66,6 @@ export const DELAY_MINUTES_MIN = 1;
 export const DELAY_MINUTES_DEFAULT = 5;
 export const DELAY_HOURS_MAX = 24;
 export const DELAY_MINUTES_MAX = DELAY_HOURS_MAX * 60;
+export function valid_minutes(minutes) {
+    return minutes >= DELAY_MINUTES_MIN && minutes <= DELAY_MINUTES_MAX;
+}

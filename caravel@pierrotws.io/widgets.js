@@ -22,15 +22,15 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Slider from 'resource:///org/gnome/shell/ui/slider.js';
 import { gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 import { DELAY_MINUTES_MIN, DELAY_HOURS_MAX } from './define.js';
-import { Me, mergeImage, valid_minutes } from './utils.js';
+import { valid_minutes } from './define.js';
+import { mergeImage } from './utils/image.js';
+import { Me } from './utils/me.js'
 
 import St from 'gi://St';
 import GObject from 'gi://GObject';
 import Cogl from 'gi://Cogl';
 import GdkPixbuf from 'gi://GdkPixbuf';
 import Clutter from 'gi://Clutter';
-
-import * as Settings from './settings.js';
 
 /**
  * A Button to open the "gnome-shell-extension-prefs"-tool to configure this extension.
@@ -137,14 +137,14 @@ export class NextWallpaperWidget extends GObject.Object {
         let new_img = new Clutter.Image();
         let buf;
         if(this._settings.shouldPreviewBoth()) {
-            let left = GdkPixbuf.Pixbuf.new_from_file(this._bg_xml.filename_light);
-            let right = GdkPixbuf.Pixbuf.new_from_file(this._bg_xml.filename_dark);
+            let left = GdkPixbuf.Pixbuf.new_from_file(this._bg_xml.wallpaper);
+            let right = GdkPixbuf.Pixbuf.new_from_file(this._bg_xml.wallpaper_dark);
             buf = mergeImage(left, right);    
         }
         else {
             this._actual_mode = this._settings.isDarkMode();
             //Then load the one in use (depending on darkMode)
-            let path = this._actual_mode ? this._bg_xml.filename_dark : this._bg_xml.filename_light;
+            let path = this._actual_mode ? this._bg_xml.wallpaper_dark : this._bg_xml.wallpaper;
             buf = GdkPixbuf.Pixbuf.new_from_file(path);
         }
         let isSet = new_img.set_data(buf.get_pixels(),

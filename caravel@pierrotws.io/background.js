@@ -18,6 +18,7 @@
 */
 
 import {
+    BG_XML_NAME,
     BG_XML_OPTIONS,
     BG_XML_PCOLOR, 
     BG_XML_SCOLOR,
@@ -26,52 +27,39 @@ import {
     BG_XML_WALLPAPER_DARK
 } from "./define.js";
 
-import { readXMLFile } from "./utils.js";
-
-function parseXMLWp(filepath, entries){
-    let wp = new BackgroundXml(filepath);
-    for(let i=0; i<entries.length; i++) {
-        if(entries[i].n == "name"){
-            wp.name = entries[i].f[0];
-        }
-        else if (entries[i].n == BG_XML_WALLPAPER){
-            wp.wallpaper = entries[i].f[0];
-        }
-        else if (entries[i].n == BG_XML_WALLPAPER_DARK){
-            wp.wallpaper_dark = entries[i].f[0];
-        }
-        else if (entries[i].n == BG_XML_OPTIONS){
-            wp.options = entries[i].f[0];
-        }
-        else if (entries[i].n == BG_XML_SHADE_TYPE){
-            wp.shade_type = entries[i].f[0];
-        }
-        else if (entries[i].n == BG_XML_PCOLOR){
-            wp.pcolor = entries[i].f[0];
-        }
-        else if (entries[i].n == BG_XML_SCOLOR){
-            wp.scolor = entries[i].f[0];
-        }
-    }
-    return wp;
-}
-
-export function createFromXML(filepath) {
-    let content = readXMLFile(filepath);
-    //ignore metadata, get data only
-    content = content.f
-    for(let i=0; i< content.length; i++){
-        let child = content[i];
-        //ignore anything else than "wallpapers" node
-        if(child.n == "wallpapers") {
-            //"wallpapers" node has one child only for now, the wallpaper
-            return parseXMLWp(filepath, child.f[0].f);
-        }
-    }
-}
-
 export class BackgroundXml {
-    constructor(filepath){
+
+    /**
+     * Create new instance of BackgroundXml
+     * @param filepath filepath of background-properties file
+     * @param xmlContent Parsed XML content of file 
+     */
+    constructor(filepath, xmlContent){
         this.filepath = filepath;
+        for(let i=0; i<xmlContent.length; i++) {
+            switch(xmlContent[i].n) {
+                case BG_XML_NAME:
+                    this.name = xmlContent[i].f[0];
+                    break;
+                case BG_XML_WALLPAPER:
+                    this.wallpaper = xmlContent[i].f[0];
+                    break;
+                case BG_XML_WALLPAPER_DARK:
+                    this.wallpaper_dark = xmlContent[i].f[0];
+                    break;
+                case BG_XML_OPTIONS:
+                    this.options = xmlContent[i].f[0];
+                    break;
+                case BG_XML_SHADE_TYPE:
+                    this.shade_type = xmlContent[i].f[0];
+                    break;
+                case BG_XML_PCOLOR:
+                    this.pcolor = xmlContent[i].f[0];
+                    break;
+                case BG_XML_SCOLOR:
+                    this.scolor = xmlContent[i].f[0];
+                    break;
+            }
+        }
     }
 }

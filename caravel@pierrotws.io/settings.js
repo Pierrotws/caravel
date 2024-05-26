@@ -19,12 +19,14 @@
 */
 
 import Gio from 'gi://Gio';
-import { valid_minutes } from './utils.js';
+import { valid_minutes } from './define.js';
+import { BackgroundXml } from './background.js';
 
 import {
     KEY_DELAY,
     KEY_RANDOM,
     KEY_BACKGROUND_DIR,
+    KEY_CURRENT_BG,
     KEY_PREVIEW_BOTH,
     BG_KEY_WALLPAPER,
     BG_KEY_WALLPAPER_DARK,
@@ -238,22 +240,23 @@ export class Settings {
      * Set the new Wallpaper.
      * @param bg a backgroundXml Object.
      * @throws string if there was a problem setting the new wallpaper.
-     * @throws TypeError if the given path was invalid
+     * @throws TypeError if the given backgrounXml was invalid
      */
     setWallpaper(bg) {
         // Validate
-        if (bg === undefined || bg === null ) { //||  !(bg instanceof BackgroundXml)) {
+        if (bg === undefined || bg === null || !(bg instanceof BackgroundXml)) {
             throw TypeError("param should be a valid BackgroundXml. Got: '"+bg+"'");
         }
-        this._writeKey(this._bg_settings, BG_KEY_WALLPAPER, "file://"+bg.filename_light);
-        this._writeKey(this._bg_settings, BG_KEY_WALLPAPER_DARK, "file://"+bg.filename_dark);
+        this._writeKey(this._bg_settings, BG_KEY_WALLPAPER, "file://"+bg.wallpaper);
+        this._writeKey(this._bg_settings, BG_KEY_WALLPAPER_DARK, "file://"+bg.wallpaper_dark);
         this._writeKey(this._bg_settings, BG_KEY_OPTIONS, bg.options);
         this._writeKey(this._bg_settings, BG_KEY_SHADE_TYPE, bg.shade_type);
         this._writeKey(this._bg_settings, BG_KEY_PCOLOR, bg.pcolor);
         this._writeKey(this._bg_settings, BG_KEY_SCOLOR, bg.scolor);
-
+        this._writeKey(this._settings, KEY_CURRENT_BG, bg.filepath);
         if(this.getChangeLockScreen()) {
-            this._writeKey(this._screensaver_settings, BG_KEY_WALLPAPER, "file://"+bg.filename_light);
+            let wp = this.isDarkMode() ? bg.wallpaper_dark : bg.wallpaper;
+            this._writeKey(this._screensaver_settings, BG_KEY_WALLPAPER, "file://"+wp);
             this._writeKey(this._screensaver_settings, BG_KEY_OPTIONS, bg.options);
             this._writeKey(this._screensaver_settings, BG_KEY_SHADE_TYPE, bg.shade_type);
             this._writeKey(this._screensaver_settings, BG_KEY_PCOLOR, bg.pcolor);

@@ -19,10 +19,8 @@
 */
 
 import { KEY_BACKGROUND_DIR } from './define.js';
-import * as Settings from './settings.js';
 import * as Notify from './notification.js';
-import {Me, listXmlFiles} from './utils.js';
-import { createFromXML } from './background.js';
+import { listXmlFiles, newBackgroundXmlFromFile } from './utils/xml.js';
 
 /**
  * This is where the list of wallpapers is maintained and the current
@@ -35,8 +33,8 @@ export class Wallpaper {
      * Constructs a new class to do all the wallpaper-related work.
      * @private
      */
-    constructor(){
-        this._settings = new Settings.Settings(Me());
+    constructor(settings){
+        this._settings = settings;
         this._notify = new Notify.Notification();
         this._queue = [];
         this._is_random = false;
@@ -89,7 +87,7 @@ export class Wallpaper {
         let bg_path = this._settings.getBackgroundDir();
         let xml_list = listXmlFiles(bg_path);
         for (let i=0; i<xml_list.length; i++) {
-            let bg = createFromXML(xml_list[i]);
+            let bg = newBackgroundXmlFromFile(xml_list[i]);
             this._queue.push(bg);
         }
         // Check if shuffle:

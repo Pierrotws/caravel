@@ -21,8 +21,7 @@
 import GLib from 'gi://GLib';
 
 import { KEY_DELAY } from './define.js';
-import * as Settings from './settings.js';
-import { Me, valid_minutes } from './utils.js'
+import { valid_minutes } from './define.js';
 
 /**
  * A simple interface for a timer which will call the given callback-function in
@@ -54,9 +53,9 @@ export class Timer {
      * @see #setCallback
      * @private
      */
-    constructor() {
+    constructor(settings) {
         this._interval_id = null;
-        this._settings = new Settings.Settings(Me());
+        this._settings = settings;
         this._delay = this._settings.getDelay();
         this._elapsed_minutes = this._settings.getElapsedTime();
         // Listen to changes and restart with new delay.
