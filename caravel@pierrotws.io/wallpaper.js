@@ -73,6 +73,13 @@ export class Wallpaper {
     }
 
     /**
+     * Return actual Wallpaper
+     */
+    get() {
+        return this._queue[this._indx];
+    }
+
+    /**
      * Load the image-list from the settings, populate the Stack and
      *  randomize it, if necessary.
      * @private
@@ -155,7 +162,7 @@ export class Wallpaper {
     next() {
         if(this._queue.length > 1) {
             this._indx = this._getNextIndex();
-            this._settings.setWallpaper(this._queue[this._indx]);
+            this._settings.setWallpaper(this.get());
             this._triggerPreviewCallback();
         }
     }

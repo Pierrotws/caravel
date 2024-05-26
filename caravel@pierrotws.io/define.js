@@ -45,6 +45,19 @@ export const BG_KEY_SHADE_TYPE = "color-shading-type";
 export const BG_KEY_PCOLOR = "primary-color";
 export const BG_KEY_SCOLOR = "secondary-color";
 
+/* 
+ * background xml keys, because it's not the same -_-
+ * And it's mixing camel-case and snake_case
+ * ... let's say for a good reason?
+ */
+export const BG_XML_WALLPAPER = "filename";
+export const BG_XML_WALLPAPER_DARK = "filename-dark";
+export const BG_XML_OPTIONS = "options";
+export const BG_XML_SHADE_TYPE = "shade_type";
+export const BG_XML_PCOLOR = "pcolor";
+export const BG_XML_SCOLOR = "scolor";
+
+
 /* interface dconf keys */
 export const INTERFACE_KEY_MODE = "color-scheme";
 

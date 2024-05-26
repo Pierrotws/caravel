@@ -17,59 +17,61 @@
  * along with Caravel. If not, see <http://www.gnu.org/licenses/>.
 */
 
+import {
+    BG_XML_OPTIONS,
+    BG_XML_PCOLOR, 
+    BG_XML_SCOLOR,
+    BG_XML_SHADE_TYPE,
+    BG_XML_WALLPAPER,
+    BG_XML_WALLPAPER_DARK
+} from "./define.js";
+
 import { readXMLFile } from "./utils.js";
 
-function parseXMLWp(entries){
-    let wp = new BackgroundXml();
+function parseXMLWp(filepath, entries){
+    let wp = new BackgroundXml(filepath);
     for(let i=0; i<entries.length; i++) {
         if(entries[i].n == "name"){
             wp.name = entries[i].f[0];
         }
-        else if (entries[i].n == "filename"){
-            wp.filename_light = entries[i].f[0];
+        else if (entries[i].n == BG_XML_WALLPAPER){
+            wp.wallpaper = entries[i].f[0];
         }
-        else if (entries[i].n == "filename-dark"){
-            wp.filename_dark = entries[i].f[0];
+        else if (entries[i].n == BG_XML_WALLPAPER_DARK){
+            wp.wallpaper_dark = entries[i].f[0];
         }
-        else if (entries[i].n == "options"){
+        else if (entries[i].n == BG_XML_OPTIONS){
             wp.options = entries[i].f[0];
         }
-        else if (entries[i].n == "shade_type"){
+        else if (entries[i].n == BG_XML_SHADE_TYPE){
             wp.shade_type = entries[i].f[0];
         }
-        else if (entries[i].n == "pcolor"){
+        else if (entries[i].n == BG_XML_PCOLOR){
             wp.pcolor = entries[i].f[0];
         }
-        else if (entries[i].n == "scolor"){
+        else if (entries[i].n == BG_XML_SCOLOR){
             wp.scolor = entries[i].f[0];
         }
     }
     return wp;
 }
 
-function parseXMLRoot(xmlParsed){
-    let content = xmlParsed.f;
+export function createFromXML(filepath) {
+    let content = readXMLFile(filepath);
+    //ignore metadata, get data only
+    content = content.f
     for(let i=0; i< content.length; i++){
         let child = content[i];
+        //ignore anything else than "wallpapers" node
         if(child.n == "wallpapers") {
-            return parseXMLWp(child.f[0].f);
+            //"wallpapers" node has one child only for now, the wallpaper
+            return parseXMLWp(filepath, child.f[0].f);
         }
     }
 }
 
-export function createFromXML(filePath) {
-    let content = readXMLFile(filePath);
-    return parseXMLRoot(content);
-}
-
 export class BackgroundXml {
-    constructor(){
-        this.name = null;
-        this.filename_light = null;
-        this.filename_dark = null;
-        this.options = null;
-        this.shade_type = null;
-        this.pcolor = null;
-        this.scolor = null;
+    constructor(filepath){
+        this.filepath = filepath;
     }
 }

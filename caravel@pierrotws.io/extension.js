@@ -60,10 +60,12 @@ class CaravelButton extends PanelMenu.Button {
         this._buildMenu();
     }
 
-    _buildMenu(){
+    _buildMenu() {
         // Add the Widgets to the menu:
         this.menu.addMenuItem(new Widget.LabelWidget(_("Up Next")).item);
-        let next_wp_widget = new Widget.NextWallpaperWidget();
+        // NOT WORKING, use let, and assign to this._next_wp_widget later
+        //this._next_wp_widget = new Widget.NextWallpaperWidget(settings, wallpaper_control.get());
+        let next_wp_widget = new Widget.NextWallpaperWidget(settings, wallpaper_control.get());
         wallpaper_control.setPreviewCallback(function(wp) {
             try {
                 next_wp_widget.setWallpaper(wp);
@@ -137,7 +139,18 @@ class CaravelButton extends PanelMenu.Button {
                 delay_slider.setMinutes(minutes);
             }
         });
+
+        this._next_wp_widget = next_wp_widget;
+        this.menu.connect('open-state-changed', this._onMenuOpenStateChanged.bind(this));
     }
+
+    //When menu is opened, check whether to redraw wallpaper
+    _onMenuOpenStateChanged(menu, open){
+        if(open) {
+            this._next_wp_widget.checkWallpaper();
+        }
+    }
+
 }
 
 export default class CaravelExtension extends Extension {

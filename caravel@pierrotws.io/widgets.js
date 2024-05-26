@@ -81,18 +81,32 @@ export class NextWallpaperWidget extends GObject.Object {
         GObject.registerClass(this);
     }
 
-    _init() {
-        this._icon = new Clutter.Actor()
-        this._img = new Clutter.Image();
+    /**
+    * Constructor for GObject
+    * @param settings settings instance
+    * @param bgXml actual backgroundXml
+    */
+    _init(settings, bgXml) {
+        this._settings = settings;
+        this._actual_mode = this._settings.isDarkMode();
         this.item = new PopupMenu.PopupBaseMenuItem({reactive: false});
         // Overall Box:
         this._box = new St.BoxLayout({
             vertical: true,
             style_class: 'middle-aligned',
         });
-
-        this.item.add_child(this._box)
+        this._texture = new Clutter.Actor();
+        this._icon = new Clutter.Actor();
+        this._img = new Clutter.Image();
+        this._wallpaper = new St.Bin({
+            style_class: "overlay"
+        });
+        this.item.add_child(this._box);
         
+        //this.setWallpaper(bgXml);
+        
+        // There is no backgroundXml set yet
+        this._bg_xml = null;
         // The computer-picture:
         let screen_image = Me().dir.get_child('img').get_child("screen.png");
 
@@ -105,50 +119,63 @@ export class NextWallpaperWidget extends GObject.Object {
                 initial_pixbuf.get_height(),
                 initial_pixbuf.get_rowstride());
         this._icon.set_content(this._img);
-        this._icon.set_size(240,140);
-
+        this._icon.set_size(240,140);     
+        
         this._icon_bin = new St.Bin({
             child: this._icon, // The icon has much space on top/bottom,
         });
         this._box.add_child(this._icon_bin);
-        
-        this._texture = new Clutter.Actor({
-            content: this._img
-        });
-
-        this._wallpaper = new St.Bin({
-            style_class: "overlay"
-        });
-        this._wallpaper.set_child(this._texture);
         this._box.add_child(this._wallpaper);
     }
 
-
     /**
-     * Load the next image to be set as the wallpaper into the widget.
+     * Load the (next) image to be set as the wallpaper into the widget.
      * @param backgroundXml the backgrounXml object of image to preview.
      */
     setWallpaper(backgroundXml) {
-        //todo: get darkMode from settings
-        let path = backgroundXml.filename_light;
-        let left = GdkPixbuf.Pixbuf.new_from_file(backgroundXml.filename_light);
-        let right = GdkPixbuf.Pixbuf.new_from_file(backgroundXml.filename_dark);
-        let merged = mergeImage(left, right);
+        this._bg_xml = backgroundXml;
         let new_img = new Clutter.Image();
-        let isSet = new_img.set_data(merged.get_pixels(),
-            merged.get_has_alpha() ? Cogl.PixelFormat.RGBA_8888
-                            : Cogl.PixelFormat.RGB_888,
-            merged.get_width(),
-            merged.get_height(),
-            merged.get_rowstride());
-
-        if (isSet === false) {
-            throw "Image at '"+path+"' couldn't be found.";
-        } else {
-            this._texture.set_content(new_img);
-            this._wallpaper.set_child(this._texture);
-            this._icon.set_content(new_img);
+        let buf;
+        if(this._settings.shouldPreviewBoth()) {
+            let left = GdkPixbuf.Pixbuf.new_from_file(this._bg_xml.filename_light);
+            let right = GdkPixbuf.Pixbuf.new_from_file(this._bg_xml.filename_dark);
+            buf = mergeImage(left, right);    
         }
+        else {
+            this._actual_mode = this._settings.isDarkMode();
+            //Then load the one in use (depending on darkMode)
+            let path = this._actual_mode ? this._bg_xml.filename_dark : this._bg_xml.filename_light;
+            buf = GdkPixbuf.Pixbuf.new_from_file(path);
+        }
+        let isSet = new_img.set_data(buf.get_pixels(),
+                buf.get_has_alpha() ? Cogl.PixelFormat.RGBA_8888
+                                : Cogl.PixelFormat.RGB_888,
+                buf.get_width(),
+                buf.get_height(),
+                buf.get_rowstride());
+        if (isSet === false) {
+            throw "Cannot set created image";
+        }
+        this._texture.set_content(new_img);
+        this._wallpaper.set_child(this._texture);
+        this._icon.set_content(new_img);
+    }
+
+    /**
+     * Reload the image if necessary into the widget.
+     */
+    checkWallpaper() {
+        if(!this._settings.shouldPreviewBoth()) {
+            //Check if background has been set yet
+            if(this._bg_xml != null) {
+                //Check if dark-mode has changed.
+                if(this._actual_mode != this._settings.isDarkMode()){
+                    //then reload wallpaper with last one
+                    this.setWallpaper(this._bg_xml);
+                }
+            }
+        }
+        //Nothing to reload if both are previewed
     }
 
     destroy() {
